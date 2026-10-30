@@ -1,0 +1,2171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important} body{margin:0} img{max-width:100%}</style>
+<title>RVR Sim Lab</title>
+<link rel="stylesheet" href="vendor/fonts.css">
+<style>
+/* Layout: workbench — blocks | code | arena side by side on wide screens; arena first when stacked */
+:root {
+  --bg: #EDF0F3;
+  --surface: #FFFFFF;
+  --surface-2: #F4F6F9;
+  --ink: #142030;
+  --muted: #5A6778;
+  --line: #D4DBE3;
+  --accent: #D9530B;
+  --accent-soft: #FCE6D8;
+  --accent-ink: #FFFFFF;
+  --ok: #1D7F47;
+  --ok-soft: #DDF2E5;
+  --bad: #B93229;
+  --bad-soft: #F9E1DE;
+  --mat: #F8F9F6;
+  --grid: #E1E6EA;
+  --grid-strong: #C3CCD5;
+  --code-bg: #F3F5F8;
+  --tok-kw: #9A2FB5;
+  --tok-fn: #0B62C4;
+  --tok-num: #B5530A;
+  --tok-str: #1D7F47;
+  --tok-com: #7D8794;
+  --font-display: "Chakra Petch", "Trebuchet MS", sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D131A; --surface: #141C26; --surface-2: #1A2430; --ink: #E4EAF1; --muted: #93A0B0; --line: #283545;
+    --accent: #FF7A33; --accent-soft: #3A2316; --accent-ink: #1A0E06;
+    --ok: #4CC782; --ok-soft: #13301F; --bad: #FF6B5E; --bad-soft: #3A1A17;
+    --mat: #18212B; --grid: #212D3A; --grid-strong: #33435570; --code-bg: #0F161F;
+    --tok-kw: #D59CF0; --tok-fn: #7EB8FF; --tok-num: #FFB37A; --tok-str: #7FDCA4; --tok-com: #6E7B8B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D131A; --surface: #141C26; --surface-2: #1A2430; --ink: #E4EAF1; --muted: #93A0B0; --line: #283545;
+  --accent: #FF7A33; --accent-soft: #3A2316; --accent-ink: #1A0E06;
+  --ok: #4CC782; --ok-soft: #13301F; --bad: #FF6B5E; --bad-soft: #3A1A17;
+  --mat: #18212B; --grid: #212D3A; --grid-strong: #33435570; --code-bg: #0F161F;
+  --tok-kw: #D59CF0; --tok-fn: #7EB8FF; --tok-num: #FFB37A; --tok-str: #7FDCA4; --tok-com: #6E7B8B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 32px;
+}
+.wrap { max-width: 1680px; margin: 0 auto; display: grid; gap: 16px; }
+button { font: inherit; color: inherit; }
+button:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.brand h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: .01em; margin: 0; line-height: 1.1; text-wrap: balance; }
+.brand h1 span { color: var(--accent); }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.levels { display: flex; flex-wrap: wrap; gap: 8px; }
+.lvl {
+  display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 8px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 600; font-size: 14px;
+}
+.lvl .n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-size: 13px; background: var(--surface-2); border: 1px solid var(--line); }
+.lvl[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.lvl[aria-pressed="true"] .n { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.lvl.done .n { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.lvl.done .n::after { content: "✓"; }
+.lvl.done .n b { display: none; }
+
+/* bench grid */
+.bench { display: grid; gap: 16px; grid-template-columns: minmax(0, 1.12fr) minmax(0, .82fr) minmax(0, 1.3fr); grid-template-areas: "blocks code arena"; align-items: start; }
+@media (max-width: 1240px) { .bench { grid-template-columns: minmax(0,1.1fr) minmax(0,.9fr); grid-template-areas: "arena arena" "blocks code"; } }
+@media (max-width: 780px) { .bench { grid-template-columns: minmax(0,1fr); grid-template-areas: "arena" "blocks" "code"; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; display: flex; flex-direction: column; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.panel-head h2 { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0; }
+.panel-head .sub { color: var(--muted); font-size: 13px; }
+#blocksPanel { grid-area: blocks; }
+#codePanel { grid-area: code; }
+#arenaPanel { grid-area: arena; }
+
+/* blocks */
+.blockly-box { position: relative; height: 600px; }
+#blockly { position: absolute; inset: 0; isolation: isolate; border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
+.blocks-cover { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--surface) 82%, transparent); text-align: center; padding: 24px; border-radius: 0 0 var(--radius) var(--radius); z-index: 5; }
+.blocks-cover p { max-width: 30ch; margin: 0 0 12px; color: var(--muted); }
+.blocklyMainBackground { stroke: none !important; }
+
+/* code */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 5px 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.code-box { position: relative; height: 470px; background: var(--code-bg); }
+.code-box pre, .code-box textarea {
+  position: absolute; inset: 0; margin: 0; padding: 14px 16px; overflow: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
+  color: var(--ink); background: transparent; border: 0; resize: none; tab-size: 2; white-space: pre;
+}
+.code-box textarea:focus { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+.tk-kw { color: var(--tok-kw); } .tk-fn { color: var(--tok-fn); font-weight: 500; } .tk-num { color: var(--tok-num); } .tk-str { color: var(--tok-str); } .tk-com { color: var(--tok-com); font-style: italic; }
+.code-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.cheat { border-top: 1px solid var(--line); padding: 4px 14px 12px; font-size: 13px; }
+.cheat summary { cursor: pointer; font-weight: 600; padding: 8px 0; color: var(--ink); }
+.cheat dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
+.cheat dt { font-family: var(--font-mono); font-size: 12px; color: var(--tok-fn); white-space: nowrap; }
+.cheat dd { margin: 0; color: var(--muted); }
+@media (max-width: 480px) { .cheat dl { grid-template-columns: 1fr; } .cheat dd { margin-bottom: 6px; } }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 7px 12px; font-weight: 600; font-size: 14px; cursor: pointer; }
+.btn:hover { border-color: var(--grid-strong); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.run { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); padding: 8px 18px; }
+.btn.run:hover { filter: brightness(1.06); }
+.btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+/* mission */
+.mission { padding: 14px 16px; display: grid; gap: 6px; border-bottom: 1px solid var(--line); }
+.mission .eyebrow { font-family: var(--font-display); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.mission h3 { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 600; line-height: 1.15; }
+.mission p { margin: 0; max-width: 65ch; }
+.mission details { font-size: 14px; color: var(--muted); }
+.mission summary { cursor: pointer; font-weight: 600; color: var(--ink); width: fit-content; }
+.mission details p { margin-top: 6px; }
+.result { margin: 0; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 14px; }
+.result.ok { background: var(--ok-soft); color: var(--ok); }
+.result.bad { background: var(--bad-soft); color: var(--bad); }
+.result.info { background: var(--surface-2); color: var(--muted); }
+
+.stage { padding: 12px; display: grid; gap: 12px; }
+.canvas-wrap { position: relative; width: 100%; aspect-ratio: 3 / 2; max-width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--mat); }
+#arena { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls .spacer { flex: 1; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; }
+.calib { border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; font-size: 14px; }
+.calib summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+.calib .sub { color: var(--muted); font-weight: 500; font-size: 13px; }
+.calib p { margin: 0 0 8px; color: var(--muted); }
+.calib ol { margin: 0 0 10px; padding-left: 20px; display: grid; gap: 8px; }
+.calib ol div, .calib [data-copyhost] > div { margin-top: 6px; }
+.calib > div:last-child { padding-bottom: 12px; }
+.calrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.calrow label { font-weight: 600; }
+.calrow input[type="number"] { width: 84px; font: inherit; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+.calrow input[type="range"] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+.calrow output { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+#copyBox { width: 100%; height: 90px; margin-top: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--ink); background: var(--code-bg); border: 1px solid var(--accent); border-radius: 6px; padding: 6px 8px; }
+.telemetry { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.telemetry div { padding: 8px 10px; border-right: 1px solid var(--line); min-width: 0; }
+.telemetry div:last-child { border-right: 0; }
+.telemetry span { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.telemetry b { font-family: var(--font-mono); font-weight: 500; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--grid-strong); flex: none; }
+@media (max-width: 560px) { .telemetry { grid-template-columns: repeat(3, minmax(0,1fr)); } .telemetry div:nth-child(3) { border-right: 0; } .telemetry div:nth-child(-n+3) { border-bottom: 1px solid var(--line); } }
+.console { font-family: var(--font-mono); font-size: 12.5px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; height: 110px; overflow: auto; }
+.console div { white-space: pre-wrap; word-break: break-word; }
+.console .err { color: var(--bad); }
+.console .ok { color: var(--ok); }
+.console .dim { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>RVR <span>Sim</span> Lab</h1>
+      <p>Code a virtual Sphero RVR+ with blocks, watch the code appear, then run it on the real robot. <a href="rvr-sim-lab-guide.html" style="color:var(--accent);font-weight:600">How to use the Sim Lab</a></p>
+    </div>
+    <nav class="levels" id="levels" aria-label="Missions"></nav>
+  </header>
+
+  <main class="bench">
+    <section class="panel" id="blocksPanel" aria-label="Blocks">
+      <div class="panel-head"><h2>Blocks</h2><span class="sub">Snap blocks under “when program starts”</span></div>
+      <div class="blockly-box">
+        <div id="blockly"></div>
+        <div class="blocks-cover" id="blocksCover" hidden>
+          <div>
+            <p id="coverMsg">You're coding in text right now. Blocks are paused.</p>
+            <button class="btn" id="backToBlocks" type="button">Go back to blocks</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="codePanel" aria-label="Code">
+      <div class="panel-head">
+        <h2>Code</h2>
+        <div class="seg" role="group" aria-label="Language">
+          <button type="button" id="langJs" aria-pressed="true">JavaScript</button>
+          <button type="button" id="langPy" aria-pressed="false">Python</button>
+        </div>
+        <div class="seg" role="group" aria-label="Code mode">
+          <button type="button" id="modeBlocks" aria-pressed="true">From blocks</button>
+          <button type="button" id="modeText" aria-pressed="false">Write text</button>
+        </div>
+      </div>
+      <div class="code-box">
+        <pre id="codeView" aria-label="Generated JavaScript"></pre>
+        <textarea id="codeEdit" spellcheck="false" aria-label="Your JavaScript" hidden></textarea>
+      </div>
+      <div class="code-foot" data-copyhost>
+        <span id="codeNote">This updates live as you move blocks.</span>
+        <button class="btn" type="button" id="rebuildBtn" hidden>Replace with code from blocks</button>
+        <button class="btn" type="button" id="copyBtn">Copy for Sphero Edu</button>
+      </div>
+      <details class="cheat">
+        <summary>Command cheat sheet</summary>
+        <dl id="cheatList"></dl>
+        <p id="cheatNote" style="margin:10px 0 0;color:var(--muted)"></p>
+      </details>
+    </section>
+
+    <section class="panel" id="arenaPanel" aria-label="Arena">
+      <div class="mission">
+        <div class="eyebrow" id="mEyebrow">Mission 1</div>
+        <h3 id="mTitle">Free Roam</h3>
+        <p id="mGoal"></p>
+        <details><summary>Need a hint?</summary><p id="mHint"></p></details>
+        <p class="result info" id="result">Press Run to start your program.</p>
+      </div>
+      <div class="stage">
+        <div class="canvas-wrap"><canvas id="arena" aria-label="Top-down view of the robot's arena"></canvas></div>
+        <div class="controls">
+          <button class="btn run" type="button" id="runBtn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>Run</button>
+          <button class="btn" type="button" id="stopBtn" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg>Stop</button>
+          <button class="btn" type="button" id="resetBtn">Reset robot</button>
+          <span class="spacer"></span>
+          <div class="seg" role="group" aria-label="Simulation speed">
+            <button type="button" data-speed="1" aria-pressed="true">1×</button>
+            <button type="button" data-speed="2" aria-pressed="false">2×</button>
+            <button type="button" data-speed="4" aria-pressed="false">4×</button>
+          </div>
+          <label class="toggle"><input type="checkbox" id="trailToggle" checked> Trail</label>
+        </div>
+        <details class="calib" id="calib">
+          <summary>Match your real robot <span class="sub" id="calBadge"></span></summary>
+          <p>Real robots and floors differ, so measure yours once. Then the sim, the mission hints and the guide all use your number.</p>
+          <ol>
+            <li data-copyhost>Paste this test into Sphero Edu, put tape where the robot starts, and run it. It waits 2 seconds, then drives forward for 2 seconds.
+              <div><button class="btn" type="button" id="calCopy">Copy speed test</button></div></li>
+            <li>Measure how far it drove.
+              <div class="calrow"><label for="calDist">Distance</label><input type="number" id="calDist" min="10" max="800" step="1" inputmode="decimal" placeholder="118"><span>cm</span><button class="btn" type="button" id="calApply">Use this</button></div></li>
+          </ol>
+          <div class="calrow"><label for="calRange">Top speed</label><input type="range" id="calRange"><output id="calOut" for="calRange"></output><button class="btn" type="button" id="calReset">Default</button></div>
+          <p id="calNote" role="status"></p>
+          <div data-copyhost><p>Color cards: this test speaks the color it sees, so you can check your cards under your lights.</p>
+            <div><button class="btn" type="button" id="colorCopy">Copy color test</button></div></div>
+        </details>
+        <div class="telemetry" aria-live="off">
+          <div><span>Heading</span><b id="tHeading">0°</b></div>
+          <div><span>Speed</span><b id="tSpeed">0</b></div>
+          <div><span>x, y cm</span><b id="tLoc">0, 0</b></div>
+          <div><span>Color</span><b><i class="swatch" id="tSwatch"></i><em id="tColor" style="font-style:normal">floor</em></b></div>
+          <div><span>Time</span><b id="tTime">0.0 s</b></div>
+        </div>
+        <div class="console" id="console" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<textarea id="copyBox" hidden readonly aria-label="Code to copy. Press Control C to copy it."></textarea>
+<script src="vendor/blockly/blockly.min.js"></script>
+<script src="vendor/blockly/python_compressed.js"></script>
+<script>
+(() => {
+"use strict";
+
+/* ---------- storage helpers ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("rvrsim:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("rvrsim:" + k, JSON.stringify(v)); } catch (e) {} }
+};
+
+/* ---------- colors on the mat (physical, same in both themes) ---------- */
+const NAMED = {
+  red: [230, 60, 52], orange: [242, 138, 36], yellow: [244, 200, 48], green: [46, 165, 90],
+  blue: [44, 110, 220], purple: [140, 84, 214], white: [255, 255, 255]
+};
+const LED = { red:[255,0,0], orange:[255,120,0], yellow:[255,220,0], green:[0,255,0], cyan:[0,220,255], blue:[0,60,255], purple:[160,0,255], white:[255,255,255], off:[0,0,0] };
+const FLOOR_RGB = { r: 34, g: 36, b: 38 };
+function rgbStr(a) { return `rgb(${a[0]},${a[1]},${a[2]})`; }
+/* names a reading by its hue, not its exact RGB, so it still works on real cards under real lights.
+   The copied isColor / is_color helpers below use the same rules. */
+function nearestName(c) {
+  if (!c) return "none";
+  const hi = Math.max(c.r, c.g, c.b), lo = Math.min(c.r, c.g, c.b), d = hi - lo;
+  if (hi < 40) return "none";
+  if (d / hi < 0.2) return hi > 170 ? "white" : "none";
+  const hue = 60 * (hi === c.r ? ((c.g - c.b) / d + 6) % 6 : hi === c.g ? (c.b - c.r) / d + 2 : (c.r - c.g) / d + 4);
+  return hue < 15 ? "red" : hue < 38 ? "orange" : hue < 75 ? "yellow" : hue < 170 ? "green" : hue < 245 ? "blue" : hue < 340 ? "purple" : "red";
+}
+
+/* ---------- missions ---------- */
+const LEVELS = [
+  {
+    id: "free", name: "Free Roam", start: { x: 150, y: 36 },
+    goal: "Drive anywhere you like. Try rolling over the colored cards and changing the LED color.",
+    hint: "Heading 0 points up, 90 points right, 180 down, 270 left. Speed goes up to 255, and negative speeds drive backward. Watch the x, y readout to see how far you went.",
+    tiles: [{ x: 50, y: 120, w: 34, h: 34, c: "red" }, { x: 214, y: 112, w: 34, h: 34, c: "blue" }, { x: 136, y: 150, w: 34, h: 34, c: "yellow" }],
+    walls: [], check: s => s.dist > 1 ? { ok: true, msg: `Nice drive! You rolled ${Math.round(s.dist)} cm. Try a new route.` } : null
+  },
+  {
+    id: "square", name: "Square Dance", start: { x: 110, y: 50 },
+    goal: "Drive the dashed square: touch corners 1, 2 and 3, then finish back at the start.",
+    hint: () => `Speed 80 for ${secs(80, 80)} seconds covers one side. A “repeat 4 times” block can do all four sides if you use a variable for the heading, or just stack four roll blocks.`,
+    corners: [{ x: 110, y: 50 }, { x: 110, y: 130 }, { x: 190, y: 130 }, { x: 190, y: 50 }],
+    tiles: [], walls: [],
+    check(s) {
+      const v = s.visited;
+      if (!(v[1] && v[2] && v[3])) return { ok: false, msg: "Not yet: touch corners 1, 2 and 3 on the way around." };
+      const d = Math.hypot(s.x - this.start.x, s.y - this.start.y);
+      if (d > 14) return { ok: false, msg: `So close: you ended ${Math.round(d)} cm from the start. Finish on the start spot.` };
+      return { ok: true, msg: "Mission complete! That's a perfect square." };
+    }
+  },
+  {
+    id: "garage", name: "Garage Parking", start: { x: 40, y: 30 },
+    goal: "Steer around the walls and park inside the green garage.",
+    hint: () => `Plan the route first: up, right over the first wall, down under the second wall, then right into the garage. Each grid square is 20 cm. Speed 100 travels about ${Math.round(cmPerSec(100))} cm every second.`,
+    tiles: [], walls: [{ x: 90, y: 0, w: 12, h: 140 }, { x: 190, y: 60, w: 12, h: 140 }],
+    zone: { x: 228, y: 12, w: 62, h: 54 },
+    check(s) {
+      const z = this.zone;
+      const inside = s.x > z.x + 6 && s.x < z.x + z.w - 6 && s.y > z.y + 6 && s.y < z.y + z.h - 6;
+      if (!inside) return { ok: false, msg: "Not parked yet: finish with the robot fully inside the garage." };
+      return { ok: true, msg: s.bumps ? `Parked! You bumped a wall ${s.bumps} time${s.bumps > 1 ? "s" : ""}. Try a clean run.` : "Parked with zero bumps. Mission complete!" };
+    }
+  },
+  {
+    id: "redlight", name: "Red Light Stop", start: { x: 150, y: 28 },
+    goal: "Drive up the road and stop on the red tile. The red tile moves every time you reset, so you'll need the color sensor.",
+    hint: "Use “set speed”, then “repeat until color sensor sees red” with a tiny delay inside, then “stop”. Watch out: there's a blue tile first.",
+    road: { x: 128, y: 8, w: 44, h: 188 },
+    tiles: [], walls: [],
+    randomize() {
+      const blueY = 62 + Math.random() * 22;
+      const redY = 112 + Math.random() * 60;
+      this.tiles = [{ x: 128, y: blueY, w: 44, h: 22, c: "blue" }, { x: 128, y: redY, w: 44, h: 24, c: "red" }];
+    },
+    check(s) {
+      if (s.colorName === "red") return { ok: true, msg: "Stopped right on red. Mission complete!" };
+      const red = this.tiles.find(t => t.c === "red");
+      return { ok: false, msg: s.y > red.y + red.h ? "You drove past the red tile. Check the sensor more often." : "Not on red yet. Keep driving until the sensor sees red." };
+    }
+  }
+];
+
+/* ---------- starter programs (Blockly JSON) ---------- */
+const num = n => ({ shadow: { type: "math_number", fields: { NUM: n } } });
+const txt = t => ({ shadow: { type: "text", fields: { TEXT: t } } });
+function chain(...bs) { for (let i = bs.length - 2; i >= 0; i--) bs[i].next = { block: bs[i + 1] }; return bs[0]; }
+const roll = (h, s, d) => ({ type: "sphero_roll", inputs: { HEADING: num(h), SPEED: num(s), DURATION: num(d) } });
+const led = c => ({ type: "sphero_led", fields: { COLOR: c } });
+const delay = d => ({ type: "sphero_delay", inputs: { SECONDS: num(d) } });
+const speak = t => ({ type: "sphero_speak", inputs: { TEXT: txt(t) } });
+function program(body) {
+  return { blocks: { languageVersion: 0, blocks: [{ type: "sphero_start", x: 24, y: 24, deletable: false, inputs: body ? { DO: { block: body } } : {} }] } };
+}
+const STARTERS = {
+  free: program(chain(led("green"), speak("Here I go!"), roll(0, 90, 1.5), { type: "sphero_spin", inputs: { DEGREES: num(360), SECONDS: num(1) } }, led("purple"), roll(90, 70, 1.2))),
+  square: program(chain(led("cyan"), roll(0, 80, 1.7))),
+  garage: program(chain(led("yellow"), roll(0, 100, 2))),
+  redlight: program(chain(
+    { type: "sphero_set_heading", inputs: { HEADING: num(0) } },
+    { type: "sphero_set_speed", inputs: { SPEED: num(50) } },
+    delay(2),
+    { type: "sphero_stop" }
+  ))
+};
+
+/* ---------- DOM ---------- */
+const $ = id => document.getElementById(id);
+const els = {
+  levels: $("levels"), codeView: $("codeView"), codeEdit: $("codeEdit"), codeNote: $("codeNote"),
+  modeBlocks: $("modeBlocks"), modeText: $("modeText"), cover: $("blocksCover"), coverMsg: $("coverMsg"),
+  run: $("runBtn"), stop: $("stopBtn"), reset: $("resetBtn"), trail: $("trailToggle"),
+  result: $("result"), console: $("console"), canvas: $("arena"),
+  tHeading: $("tHeading"), tSpeed: $("tSpeed"), tLoc: $("tLoc"), tColor: $("tColor"), tSwatch: $("tSwatch"), tTime: $("tTime")
+};
+
+let levelIdx = Math.min(Math.max(store.get("level", 0), 0), LEVELS.length - 1);
+let level = LEVELS[levelIdx];
+let completed = store.get("completed", {});
+let mode = "blocks";
+let workspace = null;
+const hasBlockly = typeof window.Blockly !== "undefined";
+
+/* ---------- console ---------- */
+function log(msg, cls) {
+  const d = document.createElement("div");
+  if (cls) d.className = cls;
+  d.textContent = msg;
+  els.console.appendChild(d);
+  while (els.console.childNodes.length > 200) els.console.removeChild(els.console.firstChild);
+  els.console.scrollTop = els.console.scrollHeight;
+}
+function setResult(msg, kind) { els.result.textContent = msg; els.result.className = "result " + kind; }
+
+/* ---------- Blockly setup ---------- */
+const JS = hasBlockly ? ((window.javascript && javascript.javascriptGenerator) || Blockly.JavaScript) : null;
+const O = (window.javascript && javascript.Order) || { ATOMIC: 0, MEMBER: 1.2, FUNCTION_CALL: 2, NONE: 99 };
+const PY = hasBlockly ? ((window.python && python.pythonGenerator) || Blockly.Python || null) : null;
+const PO = (window.python && python.Order) || { ATOMIC: 0, MEMBER: 2.1, FUNCTION_CALL: 2, ADDITIVE: 8, NONE: 99 };
+const COLOR_OPTS = ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "white", "off"].map(c => [c, c]);
+const SENSE_OPTS = ["red", "orange", "yellow", "green", "blue", "purple"].map(c => [c, c]);
+const HUE = { move: 205, light: 285, sound: 330, control: 28, sense: 168, start: 48 };
+
+if (hasBlockly) {
+  Blockly.common.defineBlocksWithJsonArray([
+    { type: "sphero_start", message0: "when program starts %1 %2", args0: [{ type: "input_dummy" }, { type: "input_statement", name: "DO" }], colour: HUE.start, tooltip: "Your program begins here." },
+    { type: "sphero_roll", message0: "roll heading %1 ° speed %2 for %3 s", args0: [{ type: "input_value", name: "HEADING" }, { type: "input_value", name: "SPEED" }, { type: "input_value", name: "DURATION" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: HUE.move, tooltip: "Turn to a heading, then drive at a speed (−255 to 255) for some seconds. Negative speeds drive backward." },
+    { type: "sphero_spin", message0: "spin %1 ° over %2 s", args0: [{ type: "input_value", name: "DEGREES" }, { type: "input_value", name: "SECONDS" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: HUE.move, tooltip: "Spin in place. Positive numbers spin clockwise." },
+    { type: "sphero_set_heading", message0: "set heading %1 °", args0: [{ type: "input_value", name: "HEADING" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: HUE.move, tooltip: "0 is up, 90 right, 180 down, 270 left." },
+    { type: "sphero_set_speed", message0: "set speed %1", args0: [{ type: "input_value", name: "SPEED" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: HUE.move, tooltip: "Keep driving at this speed until you stop. Negative speeds drive backward." },
+    { type: "sphero_stop", message0: "stop", previousStatement: null, nextStatement: null, colour: HUE.move, tooltip: "Stop driving." },
+    { type: "sphero_led", message0: "set main LED %1", args0: [{ type: "field_dropdown", name: "COLOR", options: COLOR_OPTS }], previousStatement: null, nextStatement: null, colour: HUE.light, tooltip: "Change the robot's light color." },
+    { type: "sphero_speak", message0: "speak %1", args0: [{ type: "input_value", name: "TEXT" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: HUE.sound, tooltip: "Say something out loud." },
+    { type: "sphero_delay", message0: "delay %1 s", args0: [{ type: "input_value", name: "SECONDS" }], inputsInline: true, previousStatement: null, nextStatement: null, colour: HUE.control, tooltip: "Wait. The robot keeps doing what it was already doing." },
+    { type: "sphero_forever", message0: "loop forever %1 %2", args0: [{ type: "input_dummy" }, { type: "input_statement", name: "DO" }], previousStatement: null, colour: HUE.control, tooltip: "Repeat forever, until you press Stop." },
+    { type: "sphero_sees_color", message0: "color sensor sees %1", args0: [{ type: "field_dropdown", name: "COLOR", options: SENSE_OPTS }], output: "Boolean", colour: HUE.sense, tooltip: "True when the color sensor under the robot sees this color." },
+    { type: "sphero_heading", message0: "heading", output: "Number", colour: HUE.sense, tooltip: "Current heading in degrees." },
+    { type: "sphero_location", message0: "location %1", args0: [{ type: "field_dropdown", name: "AXIS", options: [["x", "x"], ["y", "y"]] }], output: "Number", colour: HUE.sense, tooltip: "Distance in cm from where the robot started." },
+    { type: "sphero_time", message0: "elapsed time", output: "Number", colour: HUE.sense, tooltip: "Seconds since the program started." }
+  ]);
+
+  const v = (b, g, n, d) => g.valueToCode(b, n, O.NONE) || d;
+  JS.forBlock.sphero_start = (b, g) => `async function startProgram() {\n${g.statementToCode(b, "DO")}}\n`;
+  JS.forBlock.sphero_roll = (b, g) => `await roll(${v(b, g, "HEADING", 0)}, ${v(b, g, "SPEED", 0)}, ${v(b, g, "DURATION", 0)});\n`;
+  JS.forBlock.sphero_spin = (b, g) => `await spin(${v(b, g, "DEGREES", 0)}, ${v(b, g, "SECONDS", 1)});\n`;
+  JS.forBlock.sphero_set_heading = (b, g) => `setHeading(${v(b, g, "HEADING", 0)});\n`;
+  JS.forBlock.sphero_set_speed = (b, g) => `setSpeed(${v(b, g, "SPEED", 0)});\n`;
+  JS.forBlock.sphero_stop = () => `stopRoll();\n`;
+  JS.forBlock.sphero_led = b => { const c = LED[b.getFieldValue("COLOR")]; return `setMainLed({ r: ${c[0]}, g: ${c[1]}, b: ${c[2]} });\n`; };
+  JS.forBlock.sphero_speak = (b, g) => `await speak(${v(b, g, "TEXT", "''")});\n`;
+  JS.forBlock.sphero_delay = (b, g) => `await delay(${v(b, g, "SECONDS", 1)});\n`;
+  JS.forBlock.sphero_forever = (b, g) => `while (true) {\n${g.statementToCode(b, "DO")}}\n`;
+  JS.forBlock.sphero_sees_color = b => [`isColor(getColor(), '${b.getFieldValue("COLOR")}')`, O.FUNCTION_CALL];
+  JS.forBlock.sphero_heading = () => ["getHeading()", O.FUNCTION_CALL];
+  JS.forBlock.sphero_location = b => [`getLocation().${b.getFieldValue("AXIS")}`, O.MEMBER];
+  JS.forBlock.sphero_time = () => ["getElapsedTime()", O.FUNCTION_CALL];
+  JS.INDENT = "  ";
+
+  if (PY) {
+    const p = (b, g, n, d) => g.valueToCode(b, n, PO.NONE) || d;
+    const body = (b, g) => g.statementToCode(b, "DO") || (g.INDENT + "pass\n");
+    PY.INDENT = "    ";
+    PY.forBlock.sphero_start = (b, g) => `async def start_program():\n${body(b, g)}`;
+    PY.forBlock.sphero_roll = (b, g) => `await roll(${p(b, g, "HEADING", 0)}, ${p(b, g, "SPEED", 0)}, ${p(b, g, "DURATION", 0)})\n`;
+    PY.forBlock.sphero_spin = (b, g) => `await spin(${p(b, g, "DEGREES", 0)}, ${p(b, g, "SECONDS", 1)})\n`;
+    PY.forBlock.sphero_set_heading = (b, g) => `set_heading(${p(b, g, "HEADING", 0)})\n`;
+    PY.forBlock.sphero_set_speed = (b, g) => `set_speed(${p(b, g, "SPEED", 0)})\n`;
+    PY.forBlock.sphero_stop = () => `stop_roll()\n`;
+    PY.forBlock.sphero_led = b => { const c = LED[b.getFieldValue("COLOR")]; return `set_main_led({'r': ${c[0]}, 'g': ${c[1]}, 'b': ${c[2]}})\n`; };
+    PY.forBlock.sphero_speak = (b, g) => `await speak(${p(b, g, "TEXT", "''")})\n`;
+    PY.forBlock.sphero_delay = (b, g) => `await delay(${p(b, g, "SECONDS", 1)})\n`;
+    PY.forBlock.sphero_forever = (b, g) => `while True:\n${body(b, g)}`;
+    PY.forBlock.sphero_sees_color = b => [`is_color(get_color(), '${b.getFieldValue("COLOR")}')`, PO.FUNCTION_CALL];
+    PY.forBlock.sphero_heading = () => ["get_heading()", PO.FUNCTION_CALL];
+    PY.forBlock.sphero_location = b => [`get_location()['${b.getFieldValue("AXIS")}']`, PO.MEMBER];
+    PY.forBlock.sphero_time = () => ["get_elapsed_time()", PO.FUNCTION_CALL];
+    PY.forBlock.math_change = (b, g) => {
+      const name = g.nameDB_.getName(b.getFieldValue("VAR"), Blockly.Names.NameType.VARIABLE);
+      return `${name} = ${name} + ${g.valueToCode(b, "DELTA", PO.ADDITIVE) || 0}\n`;
+    };
+  }
+}
+
+const sh = n => ({ shadow: { type: "math_number", fields: { NUM: n } } });
+const TOOLBOX = {
+  kind: "categoryToolbox",
+  contents: [
+    { kind: "category", name: "Movement", colour: String(HUE.move), contents: [
+      { kind: "block", type: "sphero_roll", inputs: { HEADING: sh(0), SPEED: sh(80), DURATION: sh(1) } },
+      { kind: "block", type: "sphero_spin", inputs: { DEGREES: sh(90), SECONDS: sh(1) } },
+      { kind: "block", type: "sphero_set_heading", inputs: { HEADING: sh(90) } },
+      { kind: "block", type: "sphero_set_speed", inputs: { SPEED: sh(60) } },
+      { kind: "block", type: "sphero_stop" }
+    ] },
+    { kind: "category", name: "Lights", colour: String(HUE.light), contents: [{ kind: "block", type: "sphero_led" }] },
+    { kind: "category", name: "Sounds", colour: String(HUE.sound), contents: [{ kind: "block", type: "sphero_speak", inputs: { TEXT: { shadow: { type: "text", fields: { TEXT: "Hello!" } } } } }] },
+    { kind: "category", name: "Controls", colour: String(HUE.control), contents: [
+      { kind: "block", type: "sphero_delay", inputs: { SECONDS: sh(1) } },
+      { kind: "block", type: "controls_repeat_ext", inputs: { TIMES: sh(4) } },
+      { kind: "block", type: "sphero_forever" },
+      { kind: "block", type: "controls_whileUntil", fields: { MODE: "UNTIL" } },
+      { kind: "block", type: "controls_if" },
+      { kind: "block", type: "controls_if", extraState: { hasElse: true } }
+    ] },
+    { kind: "category", name: "Sensors", colour: String(HUE.sense), contents: [
+      { kind: "block", type: "sphero_sees_color" },
+      { kind: "block", type: "sphero_heading" },
+      { kind: "block", type: "sphero_location" },
+      { kind: "block", type: "sphero_time" }
+    ] },
+    { kind: "category", name: "Operators", colour: "120", contents: [
+      { kind: "block", type: "math_number", fields: { NUM: 10 } },
+      { kind: "block", type: "math_arithmetic", inputs: { A: sh(1), B: sh(1) } },
+      { kind: "block", type: "math_random_int", inputs: { FROM: sh(1), TO: sh(10) } },
+      { kind: "block", type: "logic_compare", inputs: { A: sh(0), B: sh(0) } },
+      { kind: "block", type: "logic_operation" },
+      { kind: "block", type: "logic_negate" },
+      { kind: "block", type: "logic_boolean" },
+      { kind: "block", type: "text" }
+    ] },
+    { kind: "category", name: "Variables", colour: "330", custom: "VARIABLE" }
+  ]
+};
+
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function makeTheme() {
+  return Blockly.Theme.defineTheme("rvr-" + Date.now(), {
+    base: Blockly.Themes.Classic,
+    componentStyles: {
+      workspaceBackgroundColour: cssVar("--surface-2"),
+      toolboxBackgroundColour: cssVar("--surface"),
+      toolboxForegroundColour: cssVar("--ink"),
+      flyoutBackgroundColour: cssVar("--surface"),
+      flyoutForegroundColour: cssVar("--ink"),
+      flyoutOpacity: 0.97,
+      scrollbarColour: cssVar("--grid-strong"),
+      insertionMarkerColour: cssVar("--ink"),
+      insertionMarkerOpacity: 0.3
+    },
+    fontStyle: { family: "Figtree, 'Segoe UI', sans-serif", weight: "600", size: 12 },
+    startHats: true
+  });
+}
+
+function loadLevelWorkspace() {
+  if (!workspace) return;
+  const saved = store.get("ws:" + level.id, null);
+  Blockly.Events.disable();
+  try {
+    workspace.clear();
+    Blockly.serialization.workspaces.load(saved || STARTERS[level.id], workspace);
+  } catch (e) {
+    workspace.clear();
+    Blockly.serialization.workspaces.load(STARTERS[level.id], workspace);
+  }
+  Blockly.Events.enable();
+  workspace.clearUndo();
+  // make sure there's always a start block
+  if (!workspace.getBlocksByType("sphero_start", false).length) {
+    Blockly.serialization.workspaces.load(STARTERS[level.id], workspace);
+  }
+  refreshCode();
+}
+
+function initBlockly() {
+  workspace = Blockly.inject("blockly", {
+    toolbox: TOOLBOX, renderer: "zelos", theme: makeTheme(), trashcan: true, media: "vendor/blockly/media/",
+    zoom: { controls: true, wheel: true, startScale: 0.72, maxScale: 1.6, minScale: 0.4, scaleSpeed: 1.15 },
+    move: { scrollbars: true, drag: true, wheel: false },
+    grid: { spacing: 24, length: 2, colour: cssVar("--grid-strong"), snap: true }
+  });
+  workspace.addChangeListener(Blockly.Events.disableOrphans);
+  workspace.addChangeListener(e => {
+    if (e.isUiEvent) return;
+    refreshCode();
+    try { store.set("ws:" + level.id, Blockly.serialization.workspaces.save(workspace)); } catch (err) {}
+  });
+  const retheme = () => { try { workspace.setTheme(makeTheme()); } catch (e) {} };
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => setTimeout(retheme, 30)); } catch (e) {}
+  new MutationObserver(() => setTimeout(retheme, 30)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  addEventListener("resize", () => Blockly.svgResize(workspace));
+  loadLevelWorkspace();
+}
+
+/* ---------- code view ---------- */
+let lang = store.get("lang", "js") === "py" ? "py" : "js";
+const API_JS = ["roll", "spin", "setHeading", "setSpeed", "stopRoll", "delay", "setMainLed", "setFrontLed", "setBackLed", "speak", "getColor", "isColor", "getHeading", "getLocation", "getElapsedTime", "getSpeed", "exitProgram"];
+const API_PY = ["roll", "spin", "set_heading", "set_speed", "stop_roll", "delay", "set_main_led", "set_front_led", "set_back_led", "speak", "get_color", "is_color", "get_heading", "get_location", "get_elapsed_time", "get_speed", "exit_program", "print", "range", "len", "int", "str", "float", "abs", "round", "min", "max"];
+
+const CHEAT = [
+  ["await roll(heading, speed, sec)", "await roll(heading, speed, sec)", "Turn to a heading, then drive. Speed is −255 to 255; negative drives backward."],
+  ["await spin(degrees, sec)", "await spin(degrees, sec)", "Spin in place. Positive is clockwise."],
+  ["setHeading(deg)", "set_heading(deg)", "0 is up, 90 right, 180 down, 270 left."],
+  ["setSpeed(speed)", "set_speed(speed)", "Keep driving at this speed until you stop. Negative drives backward."],
+  ["stopRoll()", "stop_roll()", "Stop driving."],
+  ["await delay(sec)", "await delay(sec)", "Wait. The robot keeps doing what it was doing."],
+  ["setMainLed({ r, g, b })", "set_main_led({'r': 0, 'g': 0, 'b': 0})", "Light color, each value 0–255."],
+  ["await speak(text)", "await speak(text)", "Say something (shows a bubble here)."],
+  ["getColor()", "get_color()", "Color sensor reading with r, g and b values."],
+  ["isColor(c, 'red')", "is_color(c, 'red')", "True if a reading is close to that color."],
+  ["getHeading()", "get_heading()", "Current heading in degrees."],
+  ["getLocation()", "get_location()", "x and y in cm from the start spot."],
+  ["getElapsedTime()", "get_elapsed_time()", "Seconds since the program started."]
+];
+function renderCheat() {
+  const dl = $("cheatList");
+  dl.innerHTML = "";
+  CHEAT.forEach(([js, py, d]) => {
+    const dt = document.createElement("dt"); dt.textContent = lang === "py" ? py : js;
+    const dd = document.createElement("dd"); dd.textContent = d;
+    dl.append(dt, dd);
+  });
+  $("cheatNote").textContent = lang === "py"
+    ? "Python here covers what young coders use most: if/elif/else, while, for … in range(), def, variables, lists and print(). Indent with 4 spaces."
+    : "Your program goes inside async function startProgram(). Put await in front of commands that take time.";
+}
+
+function blocksCode(which = lang) {
+  if (!workspace) return "";
+  const gen = which === "py" ? PY : JS;
+  if (!gen) return which === "py" ? "# Python blocks didn't load. Switch to Write text to code in Python.\n" : "";
+  let code = gen.workspaceToCode(workspace);
+  return code.replace(/\n{3,}/g, "\n\n").trim() + "\n";
+}
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function highlight(code, which = lang) {
+  const py = which === "py";
+  const kw = py
+    ? "async|await|def|while|for|in|if|elif|else|not|and|or|True|False|None|return|pass|break|continue|import|from|global|is"
+    : "async|await|function|while|for|if|else|var|let|const|return|true|false|break|continue|do|new|of";
+  const com = py ? "#[^\\n]*" : "\\/\\/[^\\n]*|\\/\\*[\\s\\S]*?\\*\\/";
+  const re = new RegExp(`(${com})|('(?:[^'\\\\\\n]|\\\\.)*'|"(?:[^"\\\\\\n]|\\\\.)*")|\\b(${kw})\\b|\\b(\\d+(?:\\.\\d+)?)\\b|\\b([A-Za-z_]\\w*)(?=\\s*\\()`, "g");
+  const names = py ? API_PY : API_JS;
+  let out = "", last = 0, m;
+  while ((m = re.exec(code))) {
+    out += esc(code.slice(last, m.index));
+    const [t] = m;
+    if (m[1]) out += `<span class="tk-com">${esc(t)}</span>`;
+    else if (m[2]) out += `<span class="tk-str">${esc(t)}</span>`;
+    else if (m[3]) out += `<span class="tk-kw">${t}</span>`;
+    else if (m[4]) out += `<span class="tk-num">${t}</span>`;
+    else out += names.includes(t) ? `<span class="tk-fn">${t}</span>` : esc(t);
+    last = m.index + t.length;
+  }
+  return out + esc(code.slice(last));
+}
+function refreshCode() { if (mode === "blocks") els.codeView.innerHTML = highlight(blocksCode()); }
+
+const DEFAULT_TEXT = {
+  js: `async function startProgram() {
+  setMainLed({ r: 0, g: 255, b: 0 });
+  await roll(0, 80, 1.5);
+  await spin(360, 1);
+}
+`,
+  py: `async def start_program():
+    set_main_led({'r': 0, 'g': 255, 'b': 0})
+    await roll(0, 80, 1.5)
+    await spin(360, 1)
+`
+};
+const txtKey = () => `txt:${lang}:${level.id}`;
+const editedKey = () => `txtedited:${lang}:${level.id}`;
+const canBuildFromBlocks = () => hasBlockly && workspace && (lang === "js" || PY);
+function seedText() {
+  // text the student typed always wins; untouched text follows the blocks
+  const saved = store.get(txtKey(), null);
+  if (saved != null && store.get(editedKey(), true)) return saved;
+  if (canBuildFromBlocks()) return blocksCode();
+  return saved || DEFAULT_TEXT[lang];
+}
+function saveTyped() { store.set(txtKey(), els.codeEdit.value); store.set(editedKey(), true); }
+function setMode(m) {
+  mode = m;
+  els.modeBlocks.setAttribute("aria-pressed", String(m === "blocks"));
+  els.modeText.setAttribute("aria-pressed", String(m === "text"));
+  if (m === "text") {
+    const edited = store.get(editedKey(), store.get(txtKey(), null) != null);
+    els.codeEdit.value = seedText();
+    store.set(editedKey(), edited);
+    els.codeView.hidden = true; els.codeEdit.hidden = false;
+    els.cover.hidden = false;
+    $("rebuildBtn").hidden = !canBuildFromBlocks();
+    els.codeNote.textContent = "Edit freely. Your typed code is saved separately from your blocks.";
+    store.set("txtmode:" + level.id, true);
+    store.set(txtKey(), els.codeEdit.value);
+  } else {
+    els.codeView.hidden = false; els.codeEdit.hidden = true; els.cover.hidden = true;
+    $("rebuildBtn").hidden = true;
+    els.codeNote.textContent = "This updates live as you move blocks.";
+    store.set("txtmode:" + level.id, false);
+    refreshCode();
+    if (workspace) setTimeout(() => Blockly.svgResize(workspace), 0);
+  }
+}
+function setLang(l) {
+  lang = l; store.set("lang", l);
+  $("langJs").setAttribute("aria-pressed", String(l === "js"));
+  $("langPy").setAttribute("aria-pressed", String(l === "py"));
+  setCodeLabels();
+  renderCheat();
+  setMode(mode);
+}
+function setCodeLabels() {
+  const name = lang === "py" ? "Python" : "JavaScript";
+  els.codeEdit.setAttribute("aria-label", "Your " + name);
+  els.codeView.setAttribute("aria-label", "Generated " + name);
+}
+$("langJs").addEventListener("click", () => setLang("js"));
+$("langPy").addEventListener("click", () => setLang("py"));
+els.modeBlocks.addEventListener("click", () => { if (hasBlockly && workspace) setMode("blocks"); });
+els.modeText.addEventListener("click", () => setMode("text"));
+$("backToBlocks").addEventListener("click", () => setMode("blocks"));
+$("rebuildBtn").addEventListener("click", () => {
+  if (store.get(editedKey(), false) && !confirm("Replace your typed code with the code from your blocks? Your typed code will be lost.")) return;
+  els.codeEdit.value = blocksCode();
+  store.set(txtKey(), els.codeEdit.value); store.set(editedKey(), false);
+});
+els.codeEdit.addEventListener("input", saveTyped);
+els.codeEdit.addEventListener("keydown", e => {
+  const t = e.target;
+  if (e.key === "Tab" && !e.shiftKey) {
+    e.preventDefault();
+    t.setRangeText(lang === "py" ? "    " : "  ", t.selectionStart, t.selectionEnd, "end");
+    saveTyped();
+  }
+  if (e.key === "Enter" && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    // keep the indent of the current line, and indent one more after a ":" or "{"
+    const s = t.selectionStart, before = t.value.slice(0, s);
+    const line = before.slice(before.lastIndexOf("\n") + 1);
+    let ind = (line.match(/^[ \t]*/) || [""])[0];
+    const trimmed = line.trimEnd();
+    if (lang === "py" && trimmed.endsWith(":")) ind += "    ";
+    if (lang === "js" && trimmed.endsWith("{")) ind += "  ";
+    e.preventDefault();
+    t.setRangeText("\n" + ind, s, t.selectionEnd, "end");
+    saveTyped();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runProgram(); }
+});
+
+const HELPERS = {
+  js: `
+// Helper for Sphero Edu: turns a color reading into a yes/no answer.
+// It goes by hue (the kind of color), so it copes with different lights and cards.
+function isColor(c, name) {
+  const hi = Math.max(c.r, c.g, c.b), lo = Math.min(c.r, c.g, c.b), d = hi - lo;
+  if (hi < 40) return false;
+  if (d / hi < 0.2) return name === 'white' && hi > 170;
+  const hue = 60 * (hi === c.r ? ((c.g - c.b) / d + 6) % 6 : hi === c.g ? (c.b - c.r) / d + 2 : (c.r - c.g) / d + 4);
+  const seen = hue < 15 ? 'red' : hue < 38 ? 'orange' : hue < 75 ? 'yellow' : hue < 170 ? 'green' : hue < 245 ? 'blue' : hue < 340 ? 'purple' : 'red';
+  return seen === name;
+}
+`,
+  py: `
+# Helper for Sphero Edu: turns a color reading into a yes/no answer.
+# It goes by hue (the kind of color), so it copes with different lights and cards.
+def is_color(c, name):
+    r = c['r']
+    g = c['g']
+    b = c['b']
+    hi = max(r, g, b)
+    lo = min(r, g, b)
+    d = hi - lo
+    if hi < 40:
+        return False
+    if d / hi < 0.2:
+        return name == 'white' and hi > 170
+    if hi == r:
+        hue = 60 * (((g - b) / d + 6) % 6)
+    elif hi == g:
+        hue = 60 * ((b - r) / d + 2)
+    else:
+        hue = 60 * ((r - g) / d + 4)
+    if hue < 15 or hue >= 340:
+        seen = 'red'
+    elif hue < 38:
+        seen = 'orange'
+    elif hue < 75:
+        seen = 'yellow'
+    elif hue < 170:
+        seen = 'green'
+    elif hue < 245:
+        seen = 'blue'
+    else:
+        seen = 'purple'
+    return seen == name
+`
+};
+function withHelper(code, which = lang) {
+  const usesHelper = which === "py" ? /\bis_color\s*\(/.test(code) && !/def\s+is_color/.test(code) : /\bisColor\s*\(/.test(code) && !/function\s+isColor/.test(code);
+  return usesHelper ? code + HELPERS[which] : code;
+}
+function copyText(text, btn) {
+  const label = btn.dataset.label || (btn.dataset.label = btn.textContent);
+  const done = ok => { btn.textContent = ok ? "Copied" : "Press Ctrl+C"; setTimeout(() => btn.textContent = label, 1600); };
+  const fallback = () => {
+    // no clipboard access: show the full text, helper included, ready to copy by hand
+    const box = $("copyBox");
+    box.value = text; btn.closest("[data-copyhost]").after(box); box.hidden = false; box.focus(); box.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (err) {}
+    if (ok) box.hidden = true;
+    done(ok);
+  };
+  try { navigator.clipboard.writeText(text).then(() => done(true), fallback); } catch (err) { fallback(); }
+}
+$("copyBox").addEventListener("blur", e => { e.target.hidden = true; });
+$("copyBtn").addEventListener("click", e => copyText(withHelper(currentCode()), e.currentTarget));
+function currentCode() { return mode === "text" ? els.codeEdit.value : blocksCode(); }
+
+/* ---------- Python → JavaScript (the subset kids use) ---------- */
+class PyError extends Error { constructor(line, msg) { super(`Line ${line}: ${msg}`); } }
+const JS_RESERVED = new Set("new var function this delete typeof void switch case default let const enum instanceof catch throw do with yield static null undefined arguments eval try finally class extends super export debugger true false".split(" "));
+const PY_UNSUPPORTED = { lambda: "lambda isn't supported here. Use def instead.", class: "Classes aren't supported in the simulator.", try: "try/except isn't supported in the simulator.", except: "try/except isn't supported in the simulator.", with: "with isn't supported in the simulator.", yield: "yield isn't supported in the simulator.", del: "del isn't supported here. Use .pop() to remove a list item.", raise: "raise isn't supported in the simulator.", assert: "assert isn't supported in the simulator." };
+const PY_WORDS = new Set("and or not in is if else for await True False None".split(" "));
+const PY_AWAIT_API = new Set(["roll", "spin", "delay", "speak"]);
+const PY_SYNC_API = new Set(["set_heading", "set_speed", "stop_roll", "set_main_led", "set_front_led", "set_back_led", "get_color", "is_color", "get_heading", "get_location", "get_elapsed_time", "get_speed", "exit_program"]);
+const PY_AUG = { "+=": "__iadd", "-=": "__sub", "*=": "__mul", "/=": "__div", "//=": "__floordiv", "%=": "__mod", "**=": "__pow" };
+
+function scanStrings(s, fn) {
+  // walks s, calling fn(ch, index, inString) for each char outside strings
+  let q = null;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (q) { if (ch === "\\") { i++; continue; } if (ch === q) q = null; continue; }
+    if (ch === "'" || ch === '"') { q = ch; continue; }
+    if (fn(ch, i) === false) return;
+  }
+}
+function stripComment(l) { let cut = l.length; scanStrings(l, (ch, i) => { if (ch === "#") { cut = i; return false; } }); return l.slice(0, cut); }
+function bracketDepth(s) { let d = 0; scanStrings(s, ch => { if ("([{".includes(ch)) d++; else if (")]}".includes(ch)) d--; }); return d; }
+function topLevelIndex(s, test) {
+  let d = 0, found = -1;
+  scanStrings(s, (ch, i) => {
+    if ("([{".includes(ch)) d++; else if (")]}".includes(ch)) d--;
+    else if (d === 0 && test(ch, i)) { found = i; return false; }
+  });
+  return found;
+}
+function splitTop(s, sep) {
+  const parts = []; let d = 0, start = 0;
+  scanStrings(s, (ch, i) => {
+    if ("([{".includes(ch)) d++; else if (")]}".includes(ch)) d--;
+    else if (d === 0 && ch === sep) { parts.push(s.slice(start, i)); start = i + 1; }
+  });
+  parts.push(s.slice(start));
+  return parts.map(p => p.trim());
+}
+/* true when s is one (...) or [...] from its first character to its last */
+function wrapped(s) {
+  if (!/^[(\[]/.test(s)) return false;
+  let d = 0, close = -1;
+  scanStrings(s, (ch, i) => {
+    if ("([{".includes(ch)) d++;
+    else if (")]}".includes(ch) && --d === 0) { close = i; return false; }
+  });
+  return close === s.length - 1;
+}
+/* index of the "[" that matches the "]" ending s */
+function lastOpen(s) {
+  const open = []; let last = -1;
+  scanStrings(s, (ch, i) => { if ("([{".includes(ch)) open.push(i); else if (")]}".includes(ch)) last = open.pop(); });
+  return last;
+}
+
+function pyParse(src) {
+  if (/'''|"""/.test(src)) throw new PyError(1, "Triple-quoted strings aren't supported here. Use # for comments.");
+  const raw = src.replace(/\r/g, "").split("\n");
+  const lines = []; let buf = "", startNo = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const stripped = stripComment(raw[i].replace(/\t/g, "    "));
+    if (!buf) { if (!stripped.trim()) continue; startNo = i + 1; buf = stripped.trimEnd(); }
+    else buf += " " + stripped.trim();
+    if (buf.endsWith("\\")) { buf = buf.slice(0, -1); continue; }
+    const d = bracketDepth(buf);
+    if (d > 0) continue;
+    if (d < 0) throw new PyError(startNo, "There's a closing bracket without a matching opening one.");
+    lines.push({ no: startNo, indent: buf.match(/^ */)[0].length, text: buf.trim() });
+    buf = "";
+  }
+  if (buf) throw new PyError(startNo, "A bracket was opened but never closed.");
+
+  const root = { children: [] }; const stack = [{ indent: 0, node: root }]; let pending = null;
+  const HEADER = /^(if|elif|else|while|for|def|async\s+def)\b/;
+  for (const ln of lines) {
+    let top = stack[stack.length - 1];
+    if (pending) {
+      if (ln.indent <= top.indent) throw new PyError(ln.no, `The line after "${pending.text}" needs to be indented.`);
+      stack.push({ indent: ln.indent, node: pending }); pending = null;
+    } else {
+      while (stack.length > 1 && ln.indent < stack[stack.length - 1].indent) stack.pop();
+      if (ln.indent !== stack[stack.length - 1].indent) throw new PyError(ln.no, "This line's indentation doesn't line up with the lines around it.");
+    }
+    top = stack[stack.length - 1];
+    const node = { no: ln.no, text: ln.text, children: [] };
+    top.node.children.push(node);
+    const word = (ln.text.match(/^\w+/) || [""])[0];
+    if (PY_UNSUPPORTED[word]) throw new PyError(ln.no, PY_UNSUPPORTED[word]);
+    if (HEADER.test(ln.text)) {
+      const ci = topLevelIndex(ln.text, ch => ch === ":");
+      if (ci < 0) throw new PyError(ln.no, `This line needs a colon ":" at the end.`);
+      const rest = ln.text.slice(ci + 1).trim();
+      node.text = ln.text.slice(0, ci + 1);
+      if (rest) node.children.push({ no: ln.no, text: rest, children: [] });
+      else pending = node;
+    }
+  }
+  if (pending) throw new PyError(pending.no, `"${pending.text}" needs an indented block under it.`);
+  return root.children;
+}
+
+function pyTokens(s, no) {
+  const toks = []; let i = 0;
+  const OPS = ["**=", "//=", "//", "**", "==", "!=", "<=", ">=", "<<", ">>", "+=", "-=", "*=", "/=", "%=", "->"];
+  while (i < s.length) {
+    const ch = s[i];
+    if (/\s/.test(ch)) { i++; continue; }
+    const sm = /^([fFrRbBuU]{0,2})(['"])/.exec(s.slice(i));
+    if (sm && (sm[1] === "" || !/\w/.test(s[i - 1] || ""))) {
+      const q = sm[2]; let j = i + sm[0].length, body = "";
+      while (j < s.length && s[j] !== q) { if (s[j] === "\\") { body += s[j] + (s[j + 1] || ""); j += 2; continue; } body += s[j++]; }
+      if (j >= s.length) throw new PyError(no, "A string is missing its closing quote.");
+      toks.push({ t: "str", prefix: sm[1].toLowerCase(), q, body }); i = j + 1; continue;
+    }
+    const nm = /^(\d[\d_]*\.?\d*(?:[eE][+-]?\d+)?|\.\d+)/.exec(s.slice(i));
+    if (nm) { toks.push({ t: "num", v: nm[0].replace(/_/g, "") }); i += nm[0].length; continue; }
+    const id = /^[A-Za-z_]\w*/.exec(s.slice(i));
+    if (id) { toks.push({ t: "name", v: id[0] }); i += id[0].length; continue; }
+    const op = OPS.find(o => s.startsWith(o, i));
+    if (op) { toks.push({ t: "op", v: op }); i += op.length; continue; }
+    toks.push({ t: "op", v: ch }); i++;
+  }
+  return toks;
+}
+
+const safeName = v => JS_RESERVED.has(v) ? v + "_" : v;
+const pyTemp = ctx => { const n = "__v" + ctx.tempNo.n++; ctx.temps.push(n); return n; };
+
+function pyFString(b, ctx, no) {
+  let tpl = "", j = 0;
+  while (j < b.length) {
+    if (b[j] === "{" && b[j + 1] === "{") { tpl += "{"; j += 2; continue; }
+    if (b[j] === "}" && b[j + 1] === "}") { tpl += "}"; j += 2; continue; }
+    if (b[j] === "{") {
+      let d = 0, k = j + 1, q = null, colon = -1;
+      for (; k < b.length; k++) {
+        const ch = b[k];
+        if (q) { if (ch === q) q = null; continue; }
+        if (ch === "'" || ch === '"') q = ch;
+        else if ("([{".includes(ch)) d++;
+        else if (ch === "}" && !d) break;
+        else if (")]}".includes(ch)) d--;
+        else if (ch === ":" && !d && colon < 0) colon = k;
+      }
+      if (k >= b.length) throw new PyError(no, "An f-string has a { without a matching }.");
+      let src = b.slice(j + 1, colon < 0 ? k : colon).trim();
+      const spec = colon < 0 ? "" : b.slice(colon + 1, k), conv = /!([rs])$/.exec(src);
+      if (conv) src = src.slice(0, -2).trim();
+      const val = pyExpr(src, ctx, no);
+      tpl += "${" + (spec ? `__fmt(${val}, ${JSON.stringify(spec)})` : conv && conv[1] === "r" ? `__repr(${val})` : `__str(${val})`) + "}";
+      j = k + 1; continue;
+    }
+    if (b[j] === "`") { tpl += "\\`"; j++; continue; }
+    if (b[j] === "$") { tpl += "\\$"; j++; continue; }
+    if (b[j] === "\\") { tpl += b[j] + (b[j + 1] || ""); j += 2; continue; }
+    tpl += b[j++];
+  }
+  return "`" + tpl + "`";
+}
+
+/* recursive-descent parser for one Python expression; emits JavaScript that calls the __ helpers below */
+function pyExpr(s, ctx, no) {
+  const toks = pyTokens(s, no);
+  let i = 0;
+  const fail = msg => { throw new PyError(no, msg); };
+  const isOp = v => !!toks[i] && toks[i].t === "op" && toks[i].v === v;
+  const isKw = v => !!toks[i] && toks[i].t === "name" && toks[i].v === v;
+  const eatOp = v => isOp(v) && ++i > 0;
+  const eatKw = v => isKw(v) && ++i > 0;
+  const close = v => { if (!eatOp(v)) fail(`A "${v}" is missing here.`); };
+  const atEnd = () => i >= toks.length || isOp(")") || isOp("]") || isOp("}") || isOp(":") || isOp("=");
+  const noComp = () => { if (isKw("for")) fail("List comprehensions aren't supported here. Use a regular for loop."); };
+
+  function testList() {
+    const first = test();
+    noComp();
+    if (!isOp(",")) return first;
+    const items = [first];
+    while (eatOp(",")) { if (atEnd()) break; items.push(test()); }
+    return `__tup(${items.join(", ")})`;
+  }
+  function test() {
+    const a = orTest();
+    if (!eatKw("if")) return a;
+    const c = orTest();
+    if (!eatKw("else")) fail("A one-line if needs an else part, like: a if x else b");
+    return `(__t(${c}) ? ${a} : ${test()})`;
+  }
+  function orTest() {
+    let a = andTest();
+    while (eatKw("or")) { const t = pyTemp(ctx); a = `(__t(${t} = ${a}) ? ${t} : ${andTest()})`; }
+    return a;
+  }
+  function andTest() {
+    let a = notTest();
+    while (eatKw("and")) { const t = pyTemp(ctx); a = `(__t(${t} = ${a}) ? ${notTest()} : ${t})`; }
+    return a;
+  }
+  function notTest() { return eatKw("not") ? `(!__t(${notTest()}))` : comparison(); }
+  function peekComp() {
+    if (toks[i] && toks[i].t === "op" && ["<", ">", "<=", ">=", "==", "!="].includes(toks[i].v)) return toks[i].v;
+    if (isKw("in")) return "in";
+    if (isKw("is")) return toks[i + 1] && toks[i + 1].t === "name" && toks[i + 1].v === "not" ? "is not" : "is";
+    if (isKw("not") && toks[i + 1] && toks[i + 1].v === "in") return "not in";
+    return null;
+  }
+  const cmpJs = (op, a, b) => ({ "==": `__eq(${a}, ${b})`, "!=": `(!__eq(${a}, ${b}))`, in: `__in(${a}, ${b})`, "not in": `(!__in(${a}, ${b}))`, is: `__is(${a}, ${b})`, "is not": `(!__is(${a}, ${b}))` })[op] || `__cmp("${op}", ${a}, ${b})`;
+  function comparison() {
+    let left = arith(), out = null, op;
+    while ((op = peekComp())) {
+      i += op.includes(" ") ? 2 : 1;
+      const r = arith(), t = peekComp() ? pyTemp(ctx) : null;
+      const term = cmpJs(op, left, t ? `(${t} = ${r})` : r);
+      out = out ? `(${out} && ${term})` : term;
+      left = t;
+    }
+    return out || left;
+  }
+  function arith() {
+    let a = term();
+    for (;;) {
+      if (eatOp("+")) a = `__add(${a}, ${term()})`;
+      else if (eatOp("-")) a = `__sub(${a}, ${term()})`;
+      else return a;
+    }
+  }
+  function term() {
+    let a = factor();
+    for (;;) {
+      if (eatOp("*")) a = `__mul(${a}, ${factor()})`;
+      else if (eatOp("/")) a = `__div(${a}, ${factor()})`;
+      else if (eatOp("//")) a = `__floordiv(${a}, ${factor()})`;
+      else if (eatOp("%")) a = `__mod(${a}, ${factor()})`;
+      else return a;
+    }
+  }
+  function factor() {
+    if (eatOp("-")) return `__neg(${factor()})`;
+    if (eatOp("+")) return factor();
+    const b = eatKw("await") ? awaited() : primary(false);
+    return eatOp("**") ? `__pow(${b}, ${factor()})` : b;
+  }
+  function awaited() {
+    if (!ctx.isAsync) fail("await only works inside an async def. Change this function to async def, or put this line in start_program.");
+    return primary(true);
+  }
+  function callArgs() {
+    const args = [], kw = [];
+    while (!isOp(")")) {
+      if (i >= toks.length) fail('A ")" is missing here.');
+      if (isOp("*") || isOp("**")) fail("* and ** in a function call aren't supported here.");
+      if (toks[i].t === "name" && toks[i + 1] && toks[i + 1].t === "op" && toks[i + 1].v === "=") { const k = toks[i].v; i += 2; kw.push([k, test()]); }
+      else { if (kw.length) fail("Put plain values before named ones like end='' in a function call."); args.push(test()); noComp(); }
+      if (!eatOp(",")) break;
+    }
+    close(")");
+    return { args, kw };
+  }
+  function bindKw(name, fn, args, kw) {
+    const out = args.slice();
+    for (const [k, v] of kw) {
+      const at = fn.params.indexOf(k);
+      if (at < 0) fail(`${name}() doesn't have a setting called ${k}.`);
+      if (at < args.length) fail(`${name}() got two values for ${k}.`);
+      while (out.length <= at) out.push("undefined");
+      out[at] = v;
+    }
+    const given = args.length + kw.length;
+    if (args.length > fn.params.length) fail(`${name}() takes ${fn.params.length} value${fn.params.length === 1 ? "" : "s"}, but got ${args.length}.`);
+    if (given < fn.required) fail(`${name}() needs ${fn.required} value${fn.required === 1 ? "" : "s"}, but got ${given}.`);
+    return out.join(", ");
+  }
+  const noKw = (name, kw) => { if (kw.length) fail(`Named values like ${kw[0][0]}= aren't supported for ${name}() here. Pass the values in order.`); };
+  function callName(name, { args, kw }, wasAwaited) {
+    const fn = ctx.funcs.get(name), js = safeName(name);
+    if (fn) {
+      if (fn.isAsync && !wasAwaited) fail(`${name} is an async def, so call it with await: await ${name}()`);
+      if (!fn.isAsync && wasAwaited) fail(`${name} is a plain def, so call it without await.`);
+      return `(await ${js}(${bindKw(name, fn, args, kw)}))`;
+    }
+    if (PY_AWAIT_API.has(name)) {
+      if (!wasAwaited) fail(`${name} needs await in front of it: await ${name}(...)`);
+      noKw(name, kw);
+      return `(await ${js}(${args.join(", ")}))`;
+    }
+    if (PY_SYNC_API.has(name) || PY_LIB_NAMES.has(name)) {
+      if (wasAwaited) fail(`${name}() finishes right away, so it doesn't use await.`);
+      if (name === "print" || name === "sorted") {
+        const allowed = name === "print" ? ["sep", "end"] : ["reverse"];
+        const bad = kw.find(([k]) => !allowed.includes(k));
+        if (bad) fail(`${bad[0]}= isn't supported for ${name}() here.`);
+        if (kw.length) args = [...args, `__kw({ ${kw.map(([k, v]) => `${k}: ${v}`).join(", ")} })`];
+      } else noKw(name, kw);
+      return `${js}(${args.join(", ")})`;
+    }
+    noKw(name, kw);
+    return `(await ${js}(${args.join(", ")}))`;   // a variable that holds one of your functions
+  }
+  function strings() {
+    const parts = [];
+    while (toks[i] && toks[i].t === "str") {
+      const tk = toks[i++];
+      if (tk.prefix.includes("f")) parts.push(pyFString(tk.body, ctx, no));
+      else if (tk.prefix.includes("r")) parts.push(JSON.stringify(tk.body));
+      else parts.push(tk.q + tk.body + tk.q);
+    }
+    return parts.length > 1 ? `(${parts.join(" + ")})` : parts[0];
+  }
+  function atom() {
+    const tk = toks[i];
+    if (!tk) fail("Something is missing at the end of this line.");
+    if (tk.t === "num") { i++; return tk.v; }
+    if (tk.t === "str") return strings();
+    if (tk.t === "op") {
+      if (eatOp("(")) {
+        if (eatOp(")")) return "__tup()";
+        const e = testList(); close(")"); return `(${e})`;
+      }
+      if (eatOp("[")) {
+        const items = [];
+        while (!isOp("]")) {
+          if (i >= toks.length) fail('A "]" is missing here.');
+          items.push(test()); noComp();
+          if (!eatOp(",")) break;
+        }
+        close("]");
+        return `[${items.join(", ")}]`;
+      }
+      if (eatOp("{")) {
+        const items = [];
+        while (!isOp("}")) {
+          if (i >= toks.length) fail('A "}" is missing here.');
+          if (isOp("**")) fail("** in a dictionary isn't supported here.");
+          const k = test();
+          if (!eatOp(":")) fail("Sets aren't supported here. Use a list [ ] instead.");
+          items.push(k, test()); noComp();
+          if (!eatOp(",")) break;
+        }
+        close("}");
+        return `__dict(${items.join(", ")})`;
+      }
+      fail(`This line isn't quite right near "${tk.v}".`);
+    }
+    i++;
+    const v = tk.v;
+    if (v === "True") return "true";
+    if (v === "False") return "false";
+    if (v === "None") return "null";
+    if (PY_UNSUPPORTED[v]) fail(PY_UNSUPPORTED[v]);
+    if (v === "for") fail("List comprehensions aren't supported here. Use a regular for loop.");
+    if (PY_WORDS.has(v)) fail(`This line isn't quite right near "${v}".`);
+    return null;   // a plain name; primary() decides how to use it
+  }
+  function primary(wasAwaited) {
+    const start = toks[i];
+    let e = atom(), called = false;
+    if (e === null) {
+      const name = start.v;
+      if (isOp("(")) { i++; e = callName(name, callArgs(), wasAwaited); called = true; }
+      else e = safeName(name);
+    }
+    for (;;) {
+      if (eatOp(".")) {
+        const n = toks[i];
+        if (!n || n.t !== "name") fail('A name is missing after the ".".');
+        i++;
+        if (eatOp("(")) {
+          let { args, kw } = callArgs();
+          if (kw.length) {
+            if (n.v !== "sort" || kw.some(([k]) => k !== "reverse")) fail(`Named values like ${kw[0][0]}= aren't supported for .${n.v}() here.`);
+            args = [...args, `__kw({ ${kw.map(([k, v]) => `${k}: ${v}`).join(", ")} })`];
+          }
+          e = `__m(${e}, ${JSON.stringify(n.v)}, [${args.join(", ")}])`;
+        } else e = `__attr(${e}, ${JSON.stringify(n.v)})`;
+      } else if (eatOp("[")) {
+        const a = isOp(":") ? null : testList();
+        if (eatOp(":")) {
+          const b = isOp(":") || isOp("]") ? null : test();
+          const c = eatOp(":") && !isOp("]") ? test() : null;
+          close("]");
+          e = `__slice(${e}, ${a}, ${b}, ${c})`;
+        } else { close("]"); e = `__get(${e}, ${a})`; }
+      } else if (eatOp("(")) {
+        const { args, kw } = callArgs();
+        noKw("this function", kw);
+        e = `(await ${e}(${args.join(", ")}))`;
+      } else break;
+    }
+    return wasAwaited && !called ? `(await ${e})` : e;
+  }
+
+  const out = testList();
+  if (i < toks.length) {
+    const t = toks[i];
+    if (t.t === "op" && t.v === ":") fail("There's an extra colon in this line.");
+    if (t.t === "op" && t.v === ";") fail("Put each statement on its own line instead of using ;");
+    if (t.t === "op" && t.v === "=") fail("Use == to compare two values. A single = sets a variable.");
+    if (t.t === "op" && "&|^~<<>>".includes(t.v)) fail(`The ${t.v} operator isn't supported here.`);
+    fail(`This line isn't quite right near "${t.v !== undefined ? t.v : t.body}".`);
+  }
+  return out;
+}
+
+/* JavaScript statement(s) that store val in a Python assignment target */
+function pyAssign(t, val, ctx, no) {
+  t = t.trim();
+  const inner = wrapped(t) ? t.slice(1, -1) : t;
+  const parts = splitTop(inner, ",");
+  if (wrapped(t) || parts.length > 1) {
+    const names = parts.filter(Boolean);
+    if (names.some(p => p.startsWith("*"))) throw new PyError(no, "* in an assignment isn't supported here.");
+    const temps = names.map(() => pyTemp(ctx));
+    return `[${temps.join(", ")}] = __unpack(${val}, ${names.length}); ` + names.map((p, k) => pyAssign(p, temps[k], ctx, no)).join(" ");
+  }
+  if (/^[A-Za-z_]\w*$/.test(t)) {
+    if (PY_WORDS.has(t)) throw new PyError(no, `${t} can't be used as a variable name.`);
+    return `${safeName(t)} = ${val};`;
+  }
+  if (t.endsWith("]")) {
+    const at = lastOpen(t), key = t.slice(at + 1, -1);
+    if (topLevelIndex(key, ch => ch === ":") >= 0) throw new PyError(no, "Assigning to a slice isn't supported here.");
+    return `__set(${pyExpr(t.slice(0, at), ctx, no)}, ${pyExpr(key, ctx, no)}, ${val});`;
+  }
+  throw new PyError(no, "You can't assign a value to that.");
+}
+function simpleNames(t) {
+  const inner = wrapped(t) ? t.slice(1, -1) : t;
+  return splitTop(inner, ",").flatMap(p => /^[A-Za-z_]\w*$/.test(p) ? [p] : wrapped(p) ? simpleNames(p) : []);
+}
+function pyImports(t, no) {
+  // returns [[local name, module, attribute or null]] for an import line
+  const module = m => {
+    if (m === "time") throw new PyError(no, "time isn't available on the robot. Use await delay(seconds) to wait.");
+    if (!PY_LIB[m] || !PY_MODULE.has(PY_LIB[m])) throw new PyError(no, `The ${m} module isn't available in the simulator.`);
+    return m;
+  };
+  let m;
+  if ((m = /^from\s+([\w.]+)\s+import\s+(.+)$/.exec(t))) {
+    if (m[2].trim() === "*") throw new PyError(no, `Name each thing you need, like: from ${m[1]} import sqrt`);
+    module(m[1]);
+    return splitTop(m[2].replace(/^\(|\)$/g, ""), ",").filter(Boolean).map(p => {
+      const [a, b] = p.split(/\s+as\s+/);
+      if (!(a in PY_LIB[m[1]])) throw new PyError(no, `The ${m[1]} module here doesn't have ${a}.`);
+      return [b || a, m[1], a];
+    });
+  }
+  m = /^import\s+(.+)$/.exec(t);
+  return m ? splitTop(m[1], ",").map(p => { const [a, b] = p.split(/\s+as\s+/); module(a); return [b || a, a, null]; }) : [];
+}
+function collectAssigned(nodes, names, globals) {
+  for (const n of nodes) {
+    const t = n.text;
+    if (/^(async\s+)?def\b/.test(t)) continue;
+    let m;
+    if ((m = /^(?:global|nonlocal)\s+(.+)$/.exec(t))) { m[1].split(",").forEach(x => globals.add(x.trim())); continue; }
+    if (/^(import|from)\b/.test(t)) { pyImports(t, n.no).forEach(([local, mod, attr]) => { if (attr || local !== mod) names.add(local); }); continue; }
+    if ((m = /^for\s+(.+?)\s+in\s+(.+):$/.exec(t))) simpleNames(m[1]).forEach(x => names.add(x));
+    else if (!/^(if|elif|else|while|return|pass|break|continue)\b/.test(t)) {
+      const aug = /^([A-Za-z_]\w*)\s*(\+=|-=|\*=|\/=|%=|\*\*=|\/\/=)/.exec(t);
+      if (aug) names.add(aug[1]);
+      else {
+        let rest = t, idx;
+        while ((idx = assignIndex(rest)) >= 0) { simpleNames(rest.slice(0, idx).trim()).forEach(x => names.add(x)); rest = rest.slice(idx + 1); }
+      }
+    }
+    collectAssigned(n.children, names, globals);
+  }
+}
+function augMatch(t) {
+  const ops = ["**=", "//=", "+=", "-=", "*=", "/=", "%="]; let found = null;
+  topLevelIndex(t, (ch, i) => {
+    for (const o of ops) if (t.startsWith(o, i)) { found = [t.slice(0, i).trim(), o, t.slice(i + o.length).trim()]; return true; }
+    return false;
+  });
+  return found;
+}
+function assignIndex(s) {
+  return topLevelIndex(s, (ch, i) => ch === "=" && !"=!<>+-*/%".includes(s[i - 1] || "") && s[i + 1] !== "=");
+}
+function pyParams(src, no) {
+  return !src.trim() ? [] : splitTop(src, ",").filter(Boolean).map(p => {
+    if (p.startsWith("*")) throw new PyError(no, "*args and **kwargs aren't supported here.");
+    const eq = assignIndex(p);
+    return { name: (eq < 0 ? p : p.slice(0, eq)).split(":")[0].trim(), def: eq < 0 ? undefined : p.slice(eq + 1).trim() };
+  });
+}
+
+function pyBlock(nodes, ctx, ind) {
+  let out = "", prevKind = null;
+  for (const n of nodes) {
+    const t = n.text, no = n.no; let m;
+    const pad = "  ".repeat(ind);
+    const kids = () => pyBlock(n.children, ctx, ind + 1);
+    let kind = null;
+    if ((m = /^(async\s+)?def\s+([A-Za-z_]\w*)\s*\((.*)\)\s*(->.*)?:$/.exec(t))) {
+      const params = pyParams(m[3], no).map(p => safeName(p.name) + (p.def !== undefined ? " = " + pyExpr(p.def, ctx, no) : ""));
+      const names = new Set(), globals = new Set();
+      collectAssigned(n.children, names, globals);
+      const pnames = new Set(params.map(p => p.split("=")[0].trim()));
+      const locals = [...names].filter(x => !globals.has(x) && !pnames.has(safeName(x))).map(safeName);
+      const inner = { ...ctx, isAsync: !!m[1], temps: [] };
+      const body = pyBlock(n.children, inner, ind + 1);
+      const decl = [...locals, ...inner.temps];
+      out += `${pad}async function ${safeName(m[2])}(${params.join(", ")}) {\n`;
+      if (decl.length) out += `${pad}  let ${decl.join(", ")};\n`;
+      out += body + `${pad}}\n`;
+    } else if ((m = /^if\b\s*(.+):$/.exec(t))) { out += `${pad}if (__t(${pyExpr(m[1], ctx, no)})) {\n${kids()}${pad}}\n`; kind = "if"; }
+    else if ((m = /^elif\b\s*(.+):$/.exec(t))) {
+      if (prevKind !== "if") throw new PyError(no, "elif needs to come right after an if block.");
+      out += `${pad}else if (__t(${pyExpr(m[1], ctx, no)})) {\n${kids()}${pad}}\n`; kind = "if";
+    } else if (/^else\s*:$/.test(t)) {
+      if (prevKind !== "if") throw new PyError(no, "else needs to come right after an if or elif block.");
+      out += `${pad}else {\n${kids()}${pad}}\n`;
+    } else if ((m = /^while\b\s*(.+):$/.exec(t))) out += `${pad}while (__t(${pyExpr(m[1], ctx, no)})) { await __tick();\n${kids()}${pad}}\n`;
+    else if ((m = /^for\s+(.+?)\s+in\s+(.+):$/.exec(t))) {
+      const item = pyTemp(ctx);
+      out += `${pad}for (${item} of __iter(${pyExpr(m[2], ctx, no)})) { await __tick(); ${pyAssign(m[1], item, ctx, no)}\n${kids()}${pad}}\n`;
+    } else if (/^(if|elif|while|for|def)\b/.test(t)) throw new PyError(no, "This line isn't quite right. Check the spelling and the colon at the end.");
+    else if (/^(import|from)\b/.test(t)) {
+      for (const [local, mod, attr] of pyImports(t, no)) {
+        if (attr) out += `${pad}${safeName(local)} = __attr(${mod}, ${JSON.stringify(attr)});\n`;
+        else if (local !== mod) out += `${pad}${safeName(local)} = ${mod};\n`;
+      }
+    }
+    else if (/^(global|nonlocal)\b/.test(t)) { /* nothing needed */ }
+    else if (t === "pass") out += `${pad};\n`;
+    else if (t === "break" || t === "continue") out += `${pad}${t};\n`;
+    else if ((m = /^return\b\s*(.*)$/.exec(t))) out += `${pad}return${m[1] ? " " + pyExpr(m[1], ctx, no) : ""};\n`;
+    else if ((m = augMatch(t))) {
+      const val = pyExpr(m[2], ctx, no);
+      out += pad + pyAssign(m[0], `${PY_AUG[m[1]]}(${pyExpr(m[0], ctx, no)}, ${val})`, ctx, no) + "\n";
+    } else if (assignIndex(t) >= 0) {
+      const parts = []; let rest = t, idx;
+      while ((idx = assignIndex(rest)) >= 0) { parts.push(rest.slice(0, idx).trim()); rest = rest.slice(idx + 1); }
+      const val = pyExpr(rest, ctx, no);
+      if (parts.length === 1) out += pad + pyAssign(parts[0], val, ctx, no) + "\n";
+      else {
+        const tmp = pyTemp(ctx);
+        out += `${pad}${tmp} = ${val}; ` + parts.map(p => pyAssign(p, tmp, ctx, no)).join(" ") + "\n";
+      }
+    } else out += `${pad}${pyExpr(t, ctx, no)};\n`;
+    prevKind = kind;
+  }
+  return out;
+}
+
+function pyToJs(src) {
+  const tree = pyParse(src);
+  const funcs = new Map();
+  (function find(nodes) {
+    for (const n of nodes) {
+      const m = /^(async\s+)?def\s+([A-Za-z_]\w*)\s*\((.*)\)/.exec(n.text);
+      if (m) {
+        const ps = pyParams(m[3], n.no);
+        funcs.set(m[2], { isAsync: !!m[1], params: ps.map(p => p.name), required: ps.filter(p => p.def === undefined).length, no: n.no });
+      }
+      find(n.children);
+    }
+  })(tree);
+  const start = funcs.get("start_program");
+  if (start && !start.isAsync) throw new PyError(start.no, "Sphero Edu needs this to be: async def start_program():");
+  const ctx = { funcs, isAsync: false, temps: [], tempNo: { n: 0 } };
+  const names = new Set(), globals = new Set();
+  collectAssigned(tree, names, globals);
+  const body = pyBlock(tree, ctx, 0);
+  const decl = [...[...names].map(safeName), ...ctx.temps];
+  return (decl.length ? `var ${decl.join(", ")};\n` : "") + body;
+}
+
+/* Python values and built-ins available to programs */
+const PY_MODULE = new WeakSet();
+const isNum = v => typeof v === "number" || typeof v === "boolean";
+const isDict = v => !!v && typeof v === "object" && !Array.isArray(v) && !PY_MODULE.has(v);
+function pyRepr(v) {
+  if (typeof v === "string") return v.includes("'") && !v.includes('"') ? `"${v}"` : "'" + v.replace(/'/g, "\\'") + "'";
+  return pyStr(v);
+}
+function pyStr(v) {
+  if (v === true) return "True"; if (v === false) return "False"; if (v === null || v === undefined) return "None";
+  if (v === Infinity) return "inf"; if (v === -Infinity) return "-inf"; if (Number.isNaN(v)) return "nan";
+  if (Array.isArray(v)) return v.__tuple ? "(" + v.map(pyRepr).join(", ") + (v.length === 1 ? ",)" : ")") : "[" + v.map(pyRepr).join(", ") + "]";
+  if (typeof v === "function") return "<function>";
+  if (typeof v === "object") return "{" + Object.entries(v).map(([k, x]) => `'${k}': ${pyRepr(x)}`).join(", ") + "}";
+  return String(v);
+}
+function pyType(v) {
+  if (v === null || v === undefined) return "None";
+  if (typeof v === "boolean") return "True/False";
+  if (typeof v === "number") return "a number";
+  if (typeof v === "string") return "text";
+  if (Array.isArray(v)) return v.__tuple ? "a tuple" : "a list";
+  return typeof v === "function" ? "a function" : "a dictionary";
+}
+function pyTup(...a) { Object.defineProperty(a, "__tuple", { value: true }); return a; }
+function pyOp(word, a, b, tip) { return new Error(`You can't ${word} ${pyType(a)} and ${pyType(b)}.${tip ? " " + tip : ""}`); }
+function pyTruth(v) {
+  if (Array.isArray(v) || typeof v === "string") return v.length > 0;
+  if (isDict(v)) return Object.keys(v).length > 0;
+  return !!v;
+}
+function pyEq(a, b) {
+  a = a === undefined ? null : a; b = b === undefined ? null : b;
+  if (isNum(a) && isNum(b)) return Number(a) === Number(b);
+  if (Array.isArray(a) && Array.isArray(b)) return !!a.__tuple === !!b.__tuple && a.length === b.length && a.every((x, i) => pyEq(x, b[i]));
+  if (isDict(a) && isDict(b)) { const ka = Object.keys(a); return ka.length === Object.keys(b).length && ka.every(k => k in b && pyEq(a[k], b[k])); }
+  return a === b;
+}
+function pyCmp(op, a, b) {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    const n = Math.min(a.length, b.length);
+    for (let i = 0; i < n; i++) if (!pyEq(a[i], b[i])) return pyCmp(op, a[i], b[i]);
+    return pyCmp(op, a.length, b.length);
+  }
+  if (!((isNum(a) && isNum(b)) || (typeof a === "string" && typeof b === "string"))) throw pyOp(`compare (${op})`, a, b);
+  return op === "<" ? a < b : op === ">" ? a > b : op === "<=" ? a <= b : a >= b;
+}
+const pySort = (a, b) => pyCmp("<", a, b) ? -1 : pyCmp("<", b, a) ? 1 : 0;
+function pyAdd(a, b) {
+  if (isNum(a) && isNum(b)) return a + b;
+  if (typeof a === "string" && typeof b === "string") return a + b;
+  if (Array.isArray(a) && Array.isArray(b) && !!a.__tuple === !!b.__tuple) { const r = a.concat(b); return a.__tuple ? pyTup(...r) : r; }
+  throw pyOp("add", a, b, typeof a === "string" || typeof b === "string" ? "Turn the number into text first with str()." : "");
+}
+function pyMul(a, b) {
+  if (isNum(a) && isNum(b)) return a * b;
+  const rep = (s, n) => {
+    if (!Number.isInteger(Number(n))) throw pyOp("multiply", s, n);
+    if (typeof s === "string") return s.repeat(Math.max(0, n));
+    const r = []; for (let i = 0; i < n; i++) r.push(...s);
+    return s.__tuple ? pyTup(...r) : r;
+  };
+  if ((typeof a === "string" || Array.isArray(a)) && isNum(b)) return rep(a, b);
+  if ((typeof b === "string" || Array.isArray(b)) && isNum(a)) return rep(b, a);
+  throw pyOp("multiply", a, b);
+}
+function pyNums(word, a, b) { if (!isNum(a) || !isNum(b)) throw pyOp(word, a, b); }
+function pyMod(a, b) {
+  if (typeof a === "string") throw new Error("Text formatting with % isn't supported here. Use an f-string, like f'{x}'.");
+  pyNums("use % on", a, b);
+  if (!b) throw new Error("You can't divide by zero.");
+  return a - b * Math.floor(a / b);
+}
+function pyIndex(o, k) {
+  if (!Number.isInteger(k)) throw new Error(`A position needs to be a whole number, but got ${pyRepr(k)}.`);
+  const at = k < 0 ? o.length + k : k;
+  if (at < 0 || at >= o.length) throw new Error(`Position ${k} is past the end: there ${o.length === 1 ? "is 1 item" : `are ${o.length} items`}.`);
+  return at;
+}
+function pyGet(o, k) {
+  if (Array.isArray(o) || typeof o === "string") return o[pyIndex(o, k)];
+  if (isDict(o)) { if (!Object.prototype.hasOwnProperty.call(o, k)) throw new Error(`There's no ${pyRepr(k)} key here.`); return o[k]; }
+  throw new Error(`${pyType(o)} can't be read with [ ].`);
+}
+function pySet(o, k, v) {
+  if (Array.isArray(o)) { if (o.__tuple) throw new Error("A tuple can't be changed. Use a list instead."); o[pyIndex(o, k)] = v; return; }
+  if (isDict(o)) { if (typeof k !== "string") throw new Error("Dictionary keys need to be text in the simulator."); o[k] = v; return; }
+  throw new Error(`${pyType(o)} can't be changed with [ ].`);
+}
+function pySlice(o, a, b, c) {
+  if (!Array.isArray(o) && typeof o !== "string") throw new Error(`${pyType(o)} can't be sliced.`);
+  const n = o.length, s = c === null ? 1 : c;
+  if (!s) throw new Error("A slice step can't be 0.");
+  const fit = (v, d) => { if (v === null) return d; const x = v < 0 ? v + n : v; return s > 0 ? Math.min(Math.max(x, 0), n) : Math.min(Math.max(x, -1), n - 1); };
+  const lo = fit(a, s > 0 ? 0 : n - 1), hi = fit(b, s > 0 ? n : -1), out = [];
+  for (let i = lo; s > 0 ? i < hi : i > hi; i += s) out.push(o[i]);
+  return typeof o === "string" ? out.join("") : o.__tuple ? pyTup(...out) : out;
+}
+function pyIter(x) {
+  if (Array.isArray(x)) return x;
+  if (typeof x === "string") return [...x];
+  if (isDict(x)) return Object.keys(x);
+  throw new Error(`Can't loop over ${pyRepr(x)}.${typeof x === "number" ? ` Try range(${pyStr(x)}).` : ""}`);
+}
+function pyIn(x, c) {
+  if (typeof c === "string") { if (typeof x !== "string") throw pyOp("look for", x, c); return c.includes(x); }
+  if (isDict(c)) return Object.prototype.hasOwnProperty.call(c, x);
+  return pyIter(c).some(v => pyEq(v, x));
+}
+function pyFormat(v, spec) {
+  const m = /^(?:(.)?([<>^]))?([+ -])?(0)?(\d+)?(,)?(?:\.(\d+))?([dfFeEg%s])?$/.exec(spec);
+  if (!m) throw new Error(`The format "${spec}" isn't supported here. Try one like :.1f`);
+  const [, fill = " ", align, sign, zero, width = "0", comma, prec, type] = m;
+  let s, pre = "";
+  if (typeof v !== "number") {
+    if (type && type !== "s") throw new Error(`The format "${spec}" needs a number, but got ${pyRepr(v)}.`);
+    s = pyStr(v); if (prec !== undefined) s = s.slice(0, Number(prec));
+  } else {
+    if (type === "s") throw new Error(`The format "${spec}" needs text, but got a number.`);
+    if (type === "d" && !Number.isInteger(v)) throw new Error(`The format "${spec}" needs a whole number, but got ${v}.`);
+    const a = Math.abs(v), p = prec === undefined ? 6 : Number(prec);
+    pre = v < 0 ? "-" : sign === "+" ? "+" : sign === " " ? " " : "";
+    s = type === "f" || type === "F" ? a.toFixed(p) : type === "%" ? (a * 100).toFixed(p) + "%" : type === "e" || type === "E" ? a.toExponential(p).replace(/e([+-])(\d)$/, "e$10$2") : prec !== undefined && type !== "d" ? String(Number(a.toPrecision(Math.max(1, p)))) : String(a);
+    if (comma) s = s.replace(/^\d+/, d => d.replace(/\B(?=(\d{3})+$)/g, ","));
+  }
+  const gap = Math.max(0, Number(width) - s.length - pre.length);
+  if (zero) return pre + "0".repeat(gap) + s;
+  const side = align || (typeof v === "number" ? ">" : "<");
+  const left = side === ">" ? gap : side === "^" ? Math.floor(gap / 2) : 0;
+  return fill.repeat(left) + pre + s + fill.repeat(gap - left);
+}
+class PyKw { constructor(v) { this.v = v; } }
+const pyKwArg = a => a[a.length - 1] instanceof PyKw ? a.pop().v : {};
+const PY_LIST_M = {
+  append: (l, x) => { l.push(x); }, extend: (l, x) => { l.push(...pyIter(x)); }, insert: (l, i, x) => { l.splice(i < 0 ? Math.max(0, l.length + i) : i, 0, x); },
+  pop: (l, i = -1) => { if (!l.length) throw new Error("You can't pop from an empty list."); return l.splice(pyIndex(l, i), 1)[0]; },
+  remove: (l, x) => { const i = l.findIndex(v => pyEq(v, x)); if (i < 0) throw new Error(`${pyRepr(x)} isn't in the list.`); l.splice(i, 1); },
+  index: (l, x) => { const i = l.findIndex(v => pyEq(v, x)); if (i < 0) throw new Error(`${pyRepr(x)} isn't in the list.`); return i; },
+  count: (l, x) => l.filter(v => pyEq(v, x)).length, sort: (l, ...a) => { const kw = pyKwArg(a); l.sort(pySort); if (pyTruth(kw.reverse)) l.reverse(); },
+  reverse: l => { l.reverse(); }, clear: l => { l.length = 0; }, copy: l => l.slice()
+};
+const PY_STR_M = {
+  upper: s => s.toUpperCase(), lower: s => s.toLowerCase(), strip: s => s.trim(), lstrip: s => s.trimStart(), rstrip: s => s.trimEnd(),
+  split: (s, sep) => sep === undefined ? s.trim().split(/\s+/).filter(Boolean) : s.split(sep), join: (s, l) => pyIter(l).map(x => { if (typeof x !== "string") throw new Error(`join needs text, but got ${pyRepr(x)}.`); return x; }).join(s),
+  replace: (s, a, b) => s.split(a).join(b), startswith: (s, x) => s.startsWith(x), endswith: (s, x) => s.endsWith(x), find: (s, x) => s.indexOf(x), count: (s, x) => s.split(x).length - 1,
+  title: s => s.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase()), capitalize: s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(), isdigit: s => /^\d+$/.test(s),
+  format: (s, ...a) => { let n = 0; return s.replace(/\{(\d*)(?::([^}]*))?\}/g, (_, i, spec) => { const v = a[i === "" ? n++ : Number(i)]; return spec ? pyFormat(v, spec) : pyStr(v); }); }
+};
+const PY_DICT_M = {
+  keys: d => Object.keys(d), values: d => Object.values(d), items: d => Object.entries(d).map(([k, v]) => pyTup(k, v)), get: (d, k, x = null) => Object.prototype.hasOwnProperty.call(d, k) ? d[k] : x,
+  pop: (d, k, ...x) => { if (Object.prototype.hasOwnProperty.call(d, k)) { const v = d[k]; delete d[k]; return v; } if (x.length) return x[0]; throw new Error(`There's no ${pyRepr(k)} key here.`); },
+  update: (d, o) => { Object.assign(d, o); }, clear: d => { Object.keys(d).forEach(k => delete d[k]); }, copy: d => ({ ...d })
+};
+function pyMethod(o, n, a) {
+  if (PY_MODULE.has(o)) { if (typeof o[n] !== "function") throw new Error(`This module doesn't have ${n}().`); return o[n](...a); }
+  const table = Array.isArray(o) ? PY_LIST_M : typeof o === "string" ? PY_STR_M : isDict(o) ? PY_DICT_M : null;
+  if (!table) throw new Error(`${pyType(o)} doesn't have a .${n}() method.`);
+  if (!table[n] || (o.__tuple && n !== "index" && n !== "count")) throw new Error(`.${n}() isn't supported for ${pyType(o)} here.`);
+  return table[n](o, ...a);
+}
+let pyOut = "";
+function flushPrint() { if (pyOut) log(pyOut); pyOut = ""; }
+function pyBuiltins() {
+  const range = (a, b, s = 1) => {
+    if (b === undefined) { b = a; a = 0; }
+    a = Number(a); b = Number(b); s = Number(s);
+    if (!s) throw new Error("range() step can't be 0.");
+    const out = [];
+    for (let i = a; s > 0 ? i < b : i > b; i += s) { out.push(i); if (out.length > 100000) throw new Error("That range is too big."); }
+    return out;
+  };
+  const module = o => { PY_MODULE.add(o); return o; };
+  const need = (a, name) => { const l = a.length === 1 ? pyIter(a[0]) : a; if (!l.length) throw new Error(`${name}() needs at least one value.`); return l; };
+  const lib = {
+    print: (...a) => {
+      const kw = pyKwArg(a), sep = kw.sep === undefined ? " " : kw.sep, end = kw.end === undefined ? "\n" : kw.end;
+      pyOut += a.map(pyStr).join(sep) + end;
+      const parts = pyOut.split("\n"); pyOut = parts.pop(); parts.forEach(l => log(l));
+    },
+    range,
+    len: x => {
+      if (Array.isArray(x) || typeof x === "string") return x.length;
+      if (isDict(x)) return Object.keys(x).length;
+      throw new Error(`len() can't measure ${pyType(x)}.`);
+    },
+    int: x => { const n = typeof x === "string" ? (/^\s*[+-]?\d+\s*$/.test(x) ? Number(x) : NaN) : isNum(x) ? Math.trunc(x) : NaN; if (Number.isNaN(n)) throw new Error(`int() can't turn ${pyRepr(x)} into a number.`); return n; },
+    float: x => { const n = typeof x === "string" && !x.trim() ? NaN : isNum(x) || typeof x === "string" ? Number(x) : NaN; if (Number.isNaN(n)) throw new Error(`float() can't turn ${pyRepr(x)} into a number.`); return n; },
+    str: (x = "") => pyStr(x), bool: x => pyTruth(x), list: (x = []) => [...pyIter(x)], tuple: (x = []) => pyTup(...pyIter(x)), dict: (x = {}) => ({ ...x }),
+    abs: x => { if (!isNum(x)) throw new Error(`abs() needs a number, but got ${pyRepr(x)}.`); return Math.abs(x); },
+    min: (...a) => need(a, "min").reduce((m, v) => pySort(v, m) < 0 ? v : m), max: (...a) => need(a, "max").reduce((m, v) => pySort(v, m) > 0 ? v : m),
+    sum: (x, s = 0) => pyIter(x).reduce(pyAdd, s), pow: (a, b) => { pyNums("raise", a, b); return a ** b; },
+    sorted: (...a) => { const kw = pyKwArg(a), l = [...pyIter(a[0])].sort(pySort); return pyTruth(kw.reverse) ? l.reverse() : l; },
+    reversed: x => [...pyIter(x)].reverse(), enumerate: (x, s = 0) => pyIter(x).map((v, i) => pyTup(i + s, v)),
+    zip: (...a) => { const ls = a.map(pyIter), n = Math.min(...ls.map(l => l.length)), out = []; for (let i = 0; i < n; i++) out.push(pyTup(...ls.map(l => l[i]))); return out; },
+    any: x => pyIter(x).some(pyTruth), all: x => pyIter(x).every(pyTruth), ord: c => c.codePointAt(0), chr: n => String.fromCodePoint(n),
+    round: (x, d) => {
+      if (!isNum(x)) throw new Error(`round() needs a number, but got ${pyRepr(x)}.`);
+      if (d) return Number(Number(x).toFixed(d));
+      return Math.abs(x % 1) === 0.5 ? 2 * Math.round(x / 2) : Math.round(x);
+    },
+    isinstance: (x, t) => {
+      const kinds = Array.isArray(t) ? t : [t];
+      return kinds.some(k => k === lib.int ? typeof x === "number" && Number.isInteger(x) : k === lib.float ? typeof x === "number" && !Number.isInteger(x) : k === lib.numbers.Number ? isNum(x) : k === lib.str ? typeof x === "string" : k === lib.bool ? typeof x === "boolean" : k === lib.list ? Array.isArray(x) && !x.__tuple : k === lib.tuple ? Array.isArray(x) && !!x.__tuple : k === lib.dict ? isDict(x) : false);
+    },
+    input: () => { throw new Error("input() isn't available: the robot has no keyboard."); },
+    math: module({ pi: Math.PI, e: Math.E, inf: Infinity, sqrt: Math.sqrt, floor: Math.floor, ceil: Math.ceil, trunc: Math.trunc, sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan, atan2: Math.atan2, exp: Math.exp, log: (x, b) => b === undefined ? Math.log(x) : Math.log(x) / Math.log(b), log2: Math.log2, log10: Math.log10, hypot: Math.hypot, degrees: r => r * 180 / Math.PI, radians: d => d * Math.PI / 180, fabs: Math.abs, pow: Math.pow }),
+    random: module({ randint: (a, b) => a + Math.floor(Math.random() * (b - a + 1)), random: Math.random, choice: l => { if (!l.length) throw new Error("choice() needs at least one value."); return l[Math.floor(Math.random() * l.length)]; }, uniform: (a, b) => a + Math.random() * (b - a), shuffle: l => { for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } } }),
+    numbers: module({ Number: () => {} }),
+    __str: pyStr, __repr: pyRepr, __fmt: pyFormat, __iter: pyIter, __t: pyTruth, __tup: pyTup, __eq: pyEq, __cmp: pyCmp, __in: pyIn, __add: pyAdd, __mul: pyMul, __mod: pyMod, __get: pyGet, __set: pySet, __slice: pySlice, __m: pyMethod,
+    __kw: v => new PyKw(v), __is: (a, b) => (a === undefined ? null : a) === (b === undefined ? null : b),
+    __sub: (a, b) => { pyNums("subtract", a, b); return a - b; }, __neg: a => { if (!isNum(a)) throw new Error(`You can't make ${pyType(a)} negative.`); return -a; },
+    __div: (a, b) => { pyNums("divide", a, b); if (!b) throw new Error("You can't divide by zero."); return a / b; },
+    __floordiv: (a, b) => { pyNums("divide", a, b); if (!b) throw new Error("You can't divide by zero."); return Math.floor(a / b); },
+    __pow: (a, b) => { pyNums("raise", a, b); return a ** b; },
+    __iadd: (a, b) => { if (Array.isArray(a) && !a.__tuple) { a.push(...pyIter(b)); return a; } return pyAdd(a, b); },
+    __unpack: (x, n) => { const l = pyIter(x); if (l.length !== n) throw new Error(`Expected ${n} values to unpack, but got ${l.length}.`); return l; },
+    __attr: (o, n) => { if (o && PY_MODULE.has(o) && n in o) return o[n]; throw new Error(`${pyType(o)} doesn't have .${n}.`); },
+    __dict: (...kv) => { const d = {}; for (let i = 0; i < kv.length; i += 2) pySet(d, kv[i], kv[i + 1]); return d; }
+  };
+  return lib;
+}
+const PY_LIB = pyBuiltins();
+const PY_LIB_NAMES = new Set(Object.keys(PY_LIB).filter(k => !k.startsWith("__")));
+
+/* ---------- simulation state ---------- */
+const ARENA = { w: 300, h: 200 };
+const SUB = 1 / 120;
+const DEFAULT_CM_S = 150, MIN_CM_S = 60, MAX_CM_S = 300;   // top speed at speed 255; see "Match your real robot"
+const clampTop = v => Number.isFinite(v) ? Math.min(MAX_CM_S, Math.max(MIN_CM_S, Math.round(v))) : DEFAULT_CM_S;
+let topCmS = clampTop(store.get("topCmS", DEFAULT_CM_S));
+const cmPerSec = speed => speed / 255 * topCmS;
+const clampSpeed = s => Math.max(-255, Math.min(255, s));
+const secs = (speed, cm) => (cm / cmPerSec(speed)).toFixed(1);
+const TURN_DEG_S = 360;
+const ROBOT_R = 11;             // collision radius in cm
+const R = {};
+let simTime = 0, running = false, runId = 0, simSpeed = 1;
+let waiters = [], tickWaiters = [], bubble = null;
+let apiUsed = false, idlePasses = 0, guardPasses = 0, guardStart = 0;
+
+function resetRobot() {
+  if (level.randomize) level.randomize();
+  Object.assign(R, {
+    x: level.start.x, y: level.start.y, heading: 0, target: 0, speed: 0,
+    spinLeft: 0, spinRate: 0, led: [255, 255, 255], trail: [[level.start.x, level.start.y]],
+    bumps: 0, bumping: false, visited: [true, false, false, false], colorName: "none", color: FLOOR_RGB, dist: 0
+  });
+  simTime = 0; bubble = null;
+  sense();
+  updateTelemetry();
+}
+
+function norm(a) { return ((a % 360) + 360) % 360; }
+function angDiff(a, b) { let d = norm(b) - norm(a); if (d > 180) d -= 360; if (d < -180) d += 360; return d; }
+
+function colorAt(x, y) {
+  for (let i = level.tiles.length - 1; i >= 0; i--) {
+    const t = level.tiles[i];
+    if (x >= t.x && x <= t.x + t.w && y >= t.y && y <= t.y + t.h) {
+      const v = NAMED[t.c]; return { r: v[0], g: v[1], b: v[2] };
+    }
+  }
+  return FLOOR_RGB;
+}
+function sense() { R.color = colorAt(R.x, R.y); R.colorName = nearestName(R.color); }
+
+function collides(x, y) {
+  if (x < ROBOT_R || y < ROBOT_R || x > ARENA.w - ROBOT_R || y > ARENA.h - ROBOT_R) return true;
+  for (const w of level.walls) {
+    const cx = Math.max(w.x, Math.min(x, w.x + w.w)), cy = Math.max(w.y, Math.min(y, w.y + w.h));
+    if (Math.hypot(x - cx, y - cy) < ROBOT_R) return true;
+  }
+  return false;
+}
+
+function physics(dt) {
+  if (R.spinLeft !== 0) {
+    const step = Math.sign(R.spinLeft) * Math.min(Math.abs(R.spinLeft), Math.abs(R.spinRate) * dt);
+    R.heading = norm(R.heading + step); R.spinLeft -= step; R.target = R.heading;
+    if (Math.abs(R.spinLeft) < 1e-6) R.spinLeft = 0;
+  } else {
+    const d = angDiff(R.heading, R.target);
+    if (Math.abs(d) > 0.01) {
+      const step = Math.sign(d) * Math.min(Math.abs(d), TURN_DEG_S * dt);
+      R.heading = norm(R.heading + step);
+    }
+  }
+  const aligned = Math.abs(angDiff(R.heading, R.target)) < 2 && R.spinLeft === 0;
+  if (R.speed !== 0 && aligned) {
+    const v = cmPerSec(R.speed), rad = R.heading * Math.PI / 180;
+    const nx = R.x + Math.sin(rad) * v * dt, ny = R.y + Math.cos(rad) * v * dt;
+    if (collides(nx, ny)) {
+      if (!R.bumping) { R.bumps++; R.bumping = true; log("Bump! The robot hit something.", "err"); }
+    } else {
+      R.bumping = false; R.dist += Math.abs(v) * dt; R.x = nx; R.y = ny;
+      const last = R.trail[R.trail.length - 1];
+      if (Math.hypot(last[0] - nx, last[1] - ny) > 1.2) R.trail.push([nx, ny]);
+      if (R.trail.length > 4000) R.trail.splice(0, 1000);
+    }
+  }
+  sense();
+  if (level.corners) level.corners.forEach((c, i) => { if (i && Math.hypot(R.x - c.x, R.y - c.y) < 14) R.visited[i] = true; });
+}
+
+function resolveDue() {
+  guardStart = performance.now();
+  const ticks = tickWaiters; tickWaiters = [];
+  ticks.forEach(r => r());
+  if (!waiters.length) return;
+  const due = waiters.filter(w => w.t <= simTime + 1e-9);
+  if (due.length) { waiters = waiters.filter(w => w.t > simTime + 1e-9); due.forEach(w => w.r()); }
+}
+
+/* fast yield between physics steps so user code runs between them */
+const mc = new MessageChannel(), yq = [];
+mc.port1.onmessage = () => { const r = yq.shift(); if (r) r(); };
+const fastYield = () => new Promise(r => { yq.push(r); mc.port2.postMessage(0); });
+
+let lastTs = null, acc = 0, stepping = false;
+async function stepMany(n) {
+  for (let i = 0; i < n && running; i++) {
+    physics(SUB); simTime += SUB; resolveDue();
+    await fastYield();
+  }
+}
+function frame(ts) {
+  const dt = lastTs == null ? 0 : Math.min(0.1, (ts - lastTs) / 1000);
+  lastTs = ts;
+  if (running && !stepping) {
+    acc += dt * simSpeed;
+    const n = Math.floor(acc / SUB); acc -= n * SUB;
+    stepping = true;
+    stepMany(n).then(() => { stepping = false; render(); updateTelemetry(); requestAnimationFrame(frame); });
+    return;
+  }
+  if (bubble && (bubble.until -= dt * simSpeed) < simTime) bubble = null;   // the sim clock stops with the program
+  render(); updateTelemetry();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- robot API exposed to programs ---------- */
+class StopSignal extends Error {}
+function makeApi(id) {
+  const alive = () => { if (id !== runId || !running) throw new StopSignal(); };
+  const wait = sec => new Promise(r => { waiters.push({ t: simTime + Math.max(0, sec), r }); }).then(alive);
+  const n = (v, name) => { const x = Number(v); if (!Number.isFinite(x)) throw new Error(`${name} needs a number, but got ${JSON.stringify(v)}.`); return x; };
+  const untilAligned = () => new Promise(r => {
+    const check = () => { if (id !== runId || !running) return r(); if (Math.abs(angDiff(R.heading, R.target)) < 2 && R.spinLeft === 0) return r(); tickWaiters.push(check); };
+    check();
+  }).then(alive);
+  return {
+    async roll(heading, speed, duration) {
+      alive(); R.speed = 0; R.target = norm(n(heading, "roll heading"));
+      await untilAligned();
+      R.speed = clampSpeed(n(speed, "roll speed"));
+      if (duration !== undefined) { await wait(n(duration, "roll time")); R.speed = 0; }
+    },
+    async spin(deg, sec) {
+      alive(); R.speed = 0; const d = n(deg, "spin degrees"), s = Math.max(0.05, n(sec ?? 1, "spin time"));
+      R.spinLeft = d; R.spinRate = d / s; await wait(s); R.spinLeft = 0; R.target = R.heading;
+    },
+    setHeading(h) { alive(); R.target = norm(n(h, "heading")); },
+    setSpeed(s) { alive(); R.speed = clampSpeed(n(s, "speed")); },
+    stopRoll(h) { alive(); R.speed = 0; if (h !== undefined) R.target = norm(n(h, "heading")); },
+    async delay(sec) { alive(); await wait(n(sec, "delay")); },
+    setMainLed(c) { alive(); R.led = [c.r | 0, c.g | 0, c.b | 0].map(v => Math.max(0, Math.min(255, v))); },
+    setFrontLed(c) { this.setMainLed(c); },
+    setBackLed(c) { this.setMainLed(c); },
+    async speak(text, waitFor = true) { alive(); const t = String(text); log("Robot says: " + t); bubble = { text: t, until: simTime + 1.2 + t.length * 0.05 }; if (waitFor) await wait(0.8 + t.length * 0.05); },
+    getColor(channel) { alive(); const c = { r: R.color.r, g: R.color.g, b: R.color.b }; return channel === undefined ? c : c[String(channel)[0].toLowerCase()]; },
+    isColor(c, name) { return nearestName(c) === String(name).toLowerCase(); },
+    getHeading() { return Math.round(R.heading); },
+    getSpeed() { return R.speed; },
+    getLocation() { return { x: Math.round((R.x - level.start.x) * 10) / 10, y: Math.round((R.y - level.start.y) * 10) / 10 }; },
+    getElapsedTime() { return Math.round(simTime * 100) / 100; },
+    exitProgram() { throw new StopSignal(); },
+    // a loop gives the robot a turn after any command or sensor read; plain math loops run many passes per step
+    async __tick() {
+      alive();
+      if (!apiUsed && ++idlePasses < 2000) return;
+      apiUsed = false; idlePasses = 0;
+      await new Promise(r => tickWaiters.push(r)); alive();
+    },
+    __guard() {
+      if (!(++guardPasses & 1023) && performance.now() - guardStart > 3000) throw new Error("A loop in a plain function ran too long, so the program stopped. Check that the loop can end.");
+    }
+  };
+}
+
+/* add a pause to every loop so loops can't freeze the page. Async code gets await __tick(); plain
+   functions can't await, so they get __guard(), which stops a loop that never ends. Both go in the
+   loop's condition when it has one, which also covers loops without { } */
+function fnKindBefore(text) {
+  // what kind of function, if any, does a "{" right after this text open?
+  let t = text.trimEnd(), arrow = false;
+  if (t.endsWith("=>")) { t = t.slice(0, -2).trimEnd(); arrow = true; }
+  let head;
+  if (t.endsWith(")")) {
+    let depth = 0, k = t.length - 1;
+    for (; k >= 0; k--) { if (t[k] === ")") depth++; else if (t[k] === "(" && !--depth) break; }
+    head = t.slice(0, Math.max(k, 0)).trimEnd();
+  } else if (arrow) head = t.replace(/[\w$]+$/, "").trimEnd();
+  else return null;
+  if (arrow) return /\basync$/.test(head) ? "async" : "sync";
+  if (/\b(if|while|for|switch|catch|with)$/.test(head)) return null;
+  return /\basync\s+function\s*\*?\s*[\w$]*$|\basync\s+[\w$#]+$/.test(head) ? "async" : "sync";
+}
+function instrument(src) {
+  let out = "", i = 0;
+  const isId = ch => /[\w$]/.test(ch);
+  const scopes = ["async"], braces = [];
+  const pause = () => scopes[scopes.length - 1] === "async" ? "await __tick()" : "__guard()";
+  const regexCanStart = () => !out.trimEnd() || /[(,=:[!&|?{};+\-*%<>~^\n]$/.test(out.trimEnd()) || /\b(return|typeof|case)$/.test(out.trimEnd());
+  while (i < src.length) {
+    const ch = src[i];
+    if (ch === "/" && src[i + 1] === "/") { const j = src.indexOf("\n", i); const e = j < 0 ? src.length : j; out += src.slice(i, e); i = e; continue; }
+    if (ch === "/" && src[i + 1] === "*") { const j = src.indexOf("*/", i + 2); const e = j < 0 ? src.length : j + 2; out += src.slice(i, e); i = e; continue; }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      let j = i + 1; while (j < src.length && src[j] !== ch) { if (src[j] === "\\") j++; j++; }
+      out += src.slice(i, j + 1); i = j + 1; continue;
+    }
+    if (ch === "/" && regexCanStart()) {
+      let j = i + 1, cls = false;
+      while (j < src.length && src[j] !== "\n" && (cls || src[j] !== "/")) { if (src[j] === "\\") j++; else if (src[j] === "[") cls = true; else if (src[j] === "]") cls = false; j++; }
+      if (src[j] === "/") { out += src.slice(i, j + 1); i = j + 1; continue; }
+    }
+    if (ch === "{") {
+      const kind = fnKindBefore(out);
+      braces.push(!!kind); if (kind) scopes.push(kind);
+      out += ch; i++; continue;
+    }
+    if (ch === "}") { if (braces.pop()) scopes.pop(); out += ch; i++; continue; }
+    const kw = /^(while|for)\b/.exec(src.slice(i, i + 6));
+    if (kw && (i === 0 || !isId(src[i - 1]))) {
+      let j = i + kw[1].length; while (/\s/.test(src[j] || "")) j++;
+      if (src[j] === "(") {
+        let depth = 0, k = j;
+        const semis = [];
+        for (; k < src.length; k++) {
+          const c = src[k];
+          if (c === '"' || c === "'" || c === "`") { let q = k + 1; while (q < src.length && src[q] !== c) { if (src[q] === "\\") q++; q++; } k = q; continue; }
+          if (c === "(" || c === "[" || c === "{") depth++;
+          else if (c === ")" || c === "]" || c === "}") { depth--; if (!depth) break; }
+          else if (c === ";" && depth === 1) semis.push(k);
+        }
+        if (kw[1] === "while") { out += `${src.slice(i, j + 1)}(${pause()}, ${src.slice(j + 1, k).trim() || "true"})${src[k]}`; i = k + 1; continue; }
+        if (semis.length === 2) {
+          const cond = src.slice(semis[0] + 1, semis[1]).trim() || "true";
+          out += `${src.slice(i, semis[0] + 1)} (${pause()}, ${cond})${src.slice(semis[1], k + 1)}`; i = k + 1; continue;
+        }
+        let m = k + 1; while (/\s/.test(src[m] || "")) m++;
+        if (src[m] === "{") { out += src.slice(i, m + 1) + ` ${pause()};`; braces.push(false); i = m + 1; continue; }
+      }
+    }
+    out += ch; i++;
+  }
+  return out;
+}
+
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+async function runProgram() {
+  if (running) stopProgram(true);
+  resetRobot();
+  const code = currentCode();
+  const id = ++runId;
+  const raw = makeApi(id);
+  const bound = {};
+  for (const k of Object.keys(raw)) bound[k] = k.startsWith("__") ? raw[k].bind(raw) : (...a) => { apiUsed = true; return raw[k](...a); };
+  let env = bound, body;
+  try {
+    if (lang === "py") {
+      const snake = k => k.replace(/[A-Z]/g, c => "_" + c.toLowerCase());
+      env = { __tick: bound.__tick };
+      for (const k of Object.keys(bound)) if (!k.startsWith("__")) env[snake(k)] = bound[k];
+      Object.assign(env, pyBuiltins());
+      body = pyToJs(code) + "\n;if (typeof start_program !== 'function') throw new Error('Your code needs a function called start_program(). Start with: async def start_program():');\nawait start_program();";
+    } else {
+      body = "{\n" + instrument(code) + "\n;if (typeof startProgram !== 'function') throw new Error('Your code needs an async function called startProgram().');\nawait startProgram();\n}";
+    }
+  } catch (e) {
+    els.console.innerHTML = "";
+    log("Python problem: " + e.message, "err");
+    setResult("The program didn't start. Check the message below.", "bad");
+    return;
+  }
+  const names = Object.keys(env);
+  let fn;
+  try {
+    fn = new AsyncFunction(...names, body);
+  } catch (e) {
+    els.console.innerHTML = "";
+    log("There's a problem in your code: " + e.message, "err");
+    setResult("The program didn't start. Check the message below.", "bad");
+    return;
+  }
+  els.console.innerHTML = "";
+  log(`▶ Running “${level.name}”`, "dim");
+  setResult("Running…", "info");
+  running = true; acc = 0; pyOut = ""; apiUsed = false; idlePasses = 0; guardStart = performance.now();
+  els.run.disabled = true; els.stop.disabled = false;
+  try {
+    await fn(...names.map(k => env[k]));
+    if (id !== runId) return;
+    running = false; R.speed = 0;
+    finish();
+  } catch (e) {
+    if (id !== runId) return;
+    running = false; R.speed = 0;
+    if (e instanceof StopSignal) { log("■ Program ended.", "dim"); finish(); }
+    else { flushPrint(); log("Error: " + e.message, "err"); setResult("The program stopped with an error. Read the message below.", "bad"); }
+  } finally {
+    if (id === runId) { els.run.disabled = false; els.stop.disabled = true; }
+  }
+}
+function finish() {
+  flushPrint();
+  log(`■ Done in ${simTime.toFixed(1)} s.`, "dim");
+  const res = level.check(R);
+  if (!res) { setResult("Program finished. Change something and run it again.", "info"); return; }
+  setResult(res.msg, res.ok ? "ok" : "bad");
+  log(res.msg, res.ok ? "ok" : "err");
+  if (res.ok && !completed[level.id]) { completed[level.id] = true; store.set("completed", completed); renderLevels(); }
+}
+function stopProgram(silent) {
+  if (!running) return;
+  flushPrint();
+  runId++; running = false; R.speed = 0; R.spinLeft = 0; waiters = []; tickWaiters = [];
+  els.run.disabled = false; els.stop.disabled = true;
+  if (!silent) { log("■ Stopped.", "dim"); setResult("Stopped. Press Run to try again.", "info"); }
+}
+els.run.addEventListener("click", runProgram);
+els.stop.addEventListener("click", () => stopProgram(false));
+els.reset.addEventListener("click", () => { stopProgram(true); resetRobot(); setResult("Robot is back at the start. Press Run.", "info"); });
+document.querySelectorAll("[data-speed]").forEach(b => b.addEventListener("click", () => {
+  simSpeed = Number(b.dataset.speed);
+  document.querySelectorAll("[data-speed]").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+}));
+
+/* ---------- rendering ---------- */
+const ctx = els.canvas.getContext("2d");
+let px = 1;
+function sizeCanvas() {
+  const r = els.canvas.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+  els.canvas.width = Math.max(1, Math.round(r.width * dpr)); els.canvas.height = Math.max(1, Math.round(r.height * dpr));
+  px = els.canvas.width / ARENA.w;
+}
+new ResizeObserver(sizeCanvas).observe(els.canvas);
+const W = x => x * px, Hy = y => (ARENA.h - y) * px;
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+
+function render() {
+  if (!els.canvas.width) return;
+  const c = { mat: cssVar("--mat"), grid: cssVar("--grid"), gs: cssVar("--grid-strong"), ink: cssVar("--ink"), muted: cssVar("--muted"), accent: cssVar("--accent"), ok: cssVar("--ok"), surface: cssVar("--surface") };
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = c.mat; ctx.fillRect(0, 0, els.canvas.width, els.canvas.height);
+
+  // grid every 20 cm
+  ctx.lineWidth = Math.max(1, px * 0.35);
+  for (let x = 0; x <= ARENA.w; x += 20) { ctx.strokeStyle = x % 100 ? c.grid : c.gs; ctx.beginPath(); ctx.moveTo(W(x), 0); ctx.lineTo(W(x), Hy(0)); ctx.stroke(); }
+  for (let y = 0; y <= ARENA.h; y += 20) { ctx.strokeStyle = y % 100 ? c.grid : c.gs; ctx.beginPath(); ctx.moveTo(0, Hy(y)); ctx.lineTo(W(ARENA.w), Hy(y)); ctx.stroke(); }
+  ctx.fillStyle = c.muted; ctx.font = `500 ${Math.max(9, px * 4)}px ${cssVar("--font-mono")}`; ctx.textBaseline = "bottom";
+  ctx.fillText("20 cm grid", W(2), Hy(1));
+
+  // road
+  if (level.road) {
+    const r = level.road; ctx.fillStyle = c.gs; ctx.globalAlpha = .55; ctx.fillRect(W(r.x), Hy(r.y + r.h), W(r.w), r.h * px); ctx.globalAlpha = 1;
+    ctx.strokeStyle = c.surface; ctx.setLineDash([px * 6, px * 6]); ctx.lineWidth = px * 1.2;
+    ctx.beginPath(); ctx.moveTo(W(r.x + r.w / 2), Hy(r.y)); ctx.lineTo(W(r.x + r.w / 2), Hy(r.y + r.h)); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // tiles
+  for (const t of level.tiles) { ctx.fillStyle = rgbStr(NAMED[t.c]); rr(W(t.x), Hy(t.y + t.h), t.w * px, t.h * px, px * 2); ctx.fill(); }
+  // garage
+  if (level.zone) {
+    const z = level.zone;
+    ctx.fillStyle = c.ok; ctx.globalAlpha = .14; ctx.fillRect(W(z.x), Hy(z.y + z.h), z.w * px, z.h * px); ctx.globalAlpha = 1;
+    ctx.strokeStyle = c.ok; ctx.lineWidth = px * 1.1; ctx.setLineDash([px * 4, px * 3]); ctx.strokeRect(W(z.x), Hy(z.y + z.h), z.w * px, z.h * px); ctx.setLineDash([]);
+    ctx.fillStyle = c.ok; ctx.font = `600 ${Math.max(10, px * 5.5)}px ${cssVar("--font-display")}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("GARAGE", W(z.x + z.w / 2), Hy(z.y + z.h / 2)); ctx.textAlign = "left";
+  }
+  // walls
+  for (const w of level.walls) {
+    ctx.fillStyle = c.ink; rr(W(w.x), Hy(w.y + w.h), w.w * px, w.h * px, px * 1.5); ctx.fill();
+    ctx.save(); ctx.clip(); ctx.strokeStyle = c.accent; ctx.lineWidth = px * 1.4;
+    for (let y = w.y - w.w; y < w.y + w.h; y += 8) { ctx.beginPath(); ctx.moveTo(W(w.x), Hy(y)); ctx.lineTo(W(w.x + w.w), Hy(y + w.w)); ctx.stroke(); }
+    ctx.restore();
+  }
+  // square guide
+  if (level.corners) {
+    const k = level.corners;
+    ctx.strokeStyle = c.muted; ctx.lineWidth = px * .9; ctx.setLineDash([px * 3, px * 3]);
+    ctx.beginPath(); k.forEach((p, i) => i ? ctx.lineTo(W(p.x), Hy(p.y)) : ctx.moveTo(W(p.x), Hy(p.y))); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = `700 ${Math.max(10, px * 5)}px ${cssVar("--font-display")}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    k.forEach((p, i) => {
+      if (!i) return;
+      const on = R.visited && R.visited[i];
+      ctx.fillStyle = on ? c.ok : c.surface; ctx.strokeStyle = on ? c.ok : c.muted; ctx.lineWidth = px * .8;
+      ctx.beginPath(); ctx.arc(W(p.x), Hy(p.y), px * 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = on ? c.surface : c.ink; ctx.fillText(String(i), W(p.x), Hy(p.y) + px * .3);
+    });
+    ctx.textAlign = "left";
+  }
+  // start marker
+  ctx.strokeStyle = c.accent; ctx.lineWidth = px * .8;
+  ctx.beginPath(); ctx.arc(W(level.start.x), Hy(level.start.y), px * 13, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = c.accent; ctx.font = `600 ${Math.max(9, px * 3.8)}px ${cssVar("--font-display")}`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  ctx.fillText("START", W(level.start.x), Hy(level.start.y) + px * 14); ctx.textAlign = "left";
+
+  // trail
+  if (els.trail.checked && R.trail && R.trail.length > 1) {
+    ctx.strokeStyle = c.accent; ctx.globalAlpha = .7; ctx.lineWidth = px * 1.1; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.beginPath(); R.trail.forEach((p, i) => i ? ctx.lineTo(W(p[0]), Hy(p[1])) : ctx.moveTo(W(p[0]), Hy(p[1]))); ctx.lineTo(W(R.x), Hy(R.y)); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  drawRobot(c);
+  // speech bubble
+  if (bubble && simTime <= bubble.until) {
+    ctx.font = `600 ${Math.max(11, px * 5)}px ${cssVar("--font-body")}`;
+    const tw = ctx.measureText(bubble.text).width, pad = px * 3, bh = px * 9;
+    let bx = W(R.x) + px * 12, by = Hy(R.y) - px * 22;
+    bx = Math.min(bx, els.canvas.width - tw - pad * 2 - 2); by = Math.max(2, by);
+    ctx.fillStyle = c.surface; ctx.strokeStyle = c.ink; ctx.lineWidth = Math.max(1, px * .5);
+    rr(bx, by, tw + pad * 2, bh, px * 3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = c.ink; ctx.textBaseline = "middle"; ctx.fillText(bubble.text, bx + pad, by + bh / 2);
+  }
+}
+
+function drawRobot(c) {
+  ctx.save();
+  ctx.translate(W(R.x), Hy(R.y));
+  ctx.rotate(R.heading * Math.PI / 180);
+  const s = px, L = 21.6, Wd = 18.4;
+  const ledCol = `rgb(${R.led.join(",")})`, lit = R.led.some(v => v > 20);
+  // glow
+  if (lit) { ctx.shadowColor = ledCol; ctx.shadowBlur = s * 6; }
+  // treads
+  ctx.fillStyle = "#1c2128";
+  rr(-Wd / 2 * s, -L / 2 * s, 4.6 * s, L * s, 1.6 * s); ctx.fill();
+  rr((Wd / 2 - 4.6) * s, -L / 2 * s, 4.6 * s, L * s, 1.6 * s); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "#3a434e"; ctx.lineWidth = s * .5;
+  for (let y = -L / 2 + 1.6; y < L / 2; y += 2.2) {
+    ctx.beginPath(); ctx.moveTo(-Wd / 2 * s, y * s); ctx.lineTo((-Wd / 2 + 4.6) * s, y * s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo((Wd / 2 - 4.6) * s, y * s); ctx.lineTo(Wd / 2 * s, y * s); ctx.stroke();
+  }
+  // body
+  ctx.fillStyle = "#2b333d"; rr(-6.4 * s, -10 * s, 12.8 * s, 20 * s, 2.2 * s); ctx.fill();
+  ctx.fillStyle = "#e9edf1"; rr(-5.4 * s, -7.6 * s, 10.8 * s, 14 * s, 1.6 * s); ctx.fill();
+  // plate holes
+  ctx.fillStyle = "#b7c0ca";
+  for (let i = -1; i <= 1; i++) for (let j = -2; j <= 2; j++) { ctx.beginPath(); ctx.arc(i * 3 * s, j * 2.6 * s, .55 * s, 0, Math.PI * 2); ctx.fill(); }
+  // headlights (front = -y in local space) and tail light
+  ctx.fillStyle = lit ? ledCol : "#4a525c";
+  if (lit) { ctx.shadowColor = ledCol; ctx.shadowBlur = s * 4; }
+  rr(-5 * s, -10.6 * s, 3.4 * s, 1.6 * s, .6 * s); ctx.fill();
+  rr(1.6 * s, -10.6 * s, 3.4 * s, 1.6 * s, .6 * s); ctx.fill();
+  rr(-2.2 * s, 9.2 * s, 4.4 * s, 1.3 * s, .5 * s); ctx.fill();
+  ctx.shadowBlur = 0;
+  // heading arrow
+  ctx.fillStyle = c.accent;
+  ctx.beginPath(); ctx.moveTo(0, -13.8 * s); ctx.lineTo(-2.2 * s, -11.4 * s); ctx.lineTo(2.2 * s, -11.4 * s); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // color sensor dot (underneath, center)
+  ctx.fillStyle = rgbStr([R.color.r, R.color.g, R.color.b]); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = Math.max(1, px * .5);
+  ctx.beginPath(); ctx.arc(W(R.x), Hy(R.y), px * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+}
+
+function updateTelemetry() {
+  if (R.x === undefined) return;
+  els.tHeading.textContent = Math.round(R.heading) + "°";
+  els.tSpeed.textContent = String(Math.round(R.speed));
+  els.tLoc.textContent = `${Math.round(R.x - level.start.x)}, ${Math.round(R.y - level.start.y)}`;
+  els.tColor.textContent = R.colorName === "none" ? "floor" : R.colorName;
+  els.tSwatch.style.background = rgbStr([R.color.r, R.color.g, R.color.b]);
+  els.tTime.textContent = simTime.toFixed(1) + " s";
+}
+
+/* ---------- missions UI ---------- */
+function renderLevels() {
+  els.levels.innerHTML = "";
+  LEVELS.forEach((L, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "lvl" + (completed[L.id] ? " done" : "");
+    b.setAttribute("aria-pressed", String(i === levelIdx));
+    b.innerHTML = `<span class="n"><b>${i + 1}</b></span>${L.name}`;
+    b.addEventListener("click", () => selectLevel(i));
+    els.levels.appendChild(b);
+  });
+}
+const showHint = () => { $("mHint").textContent = typeof level.hint === "function" ? level.hint() : level.hint; };
+function selectLevel(i) {
+  stopProgram(true);
+  levelIdx = i; level = LEVELS[i]; store.set("level", i);
+  $("mEyebrow").textContent = `Mission ${i + 1} of ${LEVELS.length}`;
+  $("mTitle").textContent = level.name;
+  $("mGoal").textContent = level.goal;
+  showHint();
+  setResult(completed[level.id] ? "You've already beaten this one. Try a shorter program!" : "Press Run to start your program.", completed[level.id] ? "ok" : "info");
+  els.console.innerHTML = "";
+  renderLevels();
+  resetRobot();
+  if (workspace) loadLevelWorkspace();
+  const wantText = !hasBlockly || store.get("txtmode:" + level.id, false);
+  setMode(wantText ? "text" : "blocks");
+}
+
+/* ---------- matching the real robot ---------- */
+const CAL_SPEED = 100, CAL_SECONDS = 2;
+const CAL_TEST = {
+  js: `// Speed test for Sphero Edu: step back, then measure how far it drove.
+async function startProgram() {
+  await delay(2);
+  await roll(0, ${CAL_SPEED}, ${CAL_SECONDS});
+}
+`,
+  py: `# Speed test for Sphero Edu: step back, then measure how far it drove.
+async def start_program():
+    await delay(2)
+    await roll(0, ${CAL_SPEED}, ${CAL_SECONDS})
+`
+};
+const COLOR_TEST = {
+  js: `// Color test for Sphero Edu: hold a card under the robot and it says what it sees.
+async function startProgram() {
+  const names = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'white'];
+  while (true) {
+    const c = getColor();
+    for (const name of names) {
+      if (isColor(c, name)) {
+        await speak(name);
+      }
+    }
+    await delay(0.5);
+  }
+}
+`,
+  py: `# Color test for Sphero Edu: hold a card under the robot and it says what it sees.
+async def start_program():
+    names = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'white']
+    while True:
+        c = get_color()
+        for name in names:
+            if is_color(c, name):
+                await speak(name)
+        await delay(0.5)
+`
+};
+function showTop() {
+  const custom = topCmS !== DEFAULT_CM_S;
+  $("calRange").value = topCmS;
+  $("calOut").textContent = topCmS + " cm/s";
+  $("calBadge").textContent = custom ? `(${topCmS} cm/s)` : "";
+  $("calNote").textContent = `Speed ${CAL_SPEED} is about ${Math.round(cmPerSec(CAL_SPEED))} cm/s here${custom ? ", matched to your robot" : ", the sim's default"}.`;
+  showHint();
+}
+function setTop(v) { topCmS = clampTop(v); store.set("topCmS", topCmS); showTop(); }
+$("calRange").min = MIN_CM_S; $("calRange").max = MAX_CM_S; $("calRange").step = 1;
+$("calRange").addEventListener("input", e => setTop(Number(e.target.value)));
+$("calReset").addEventListener("click", () => { $("calDist").value = ""; setTop(DEFAULT_CM_S); });
+$("calApply").addEventListener("click", () => {
+  const cm = Number($("calDist").value), top = cm / CAL_SECONDS / CAL_SPEED * 255;
+  if (!(cm > 0)) { $("calNote").textContent = "Type how many centimeters the robot drove first."; return; }
+  if (top < MIN_CM_S || top > MAX_CM_S) { $("calNote").textContent = `${cm} cm doesn't look right for this test. Check the speed test ran, then measure again.`; return; }
+  setTop(top);
+});
+$("calCopy").addEventListener("click", e => copyText(CAL_TEST[lang], e.currentTarget));
+$("colorCopy").addEventListener("click", e => copyText(withHelper(COLOR_TEST[lang]), e.currentTarget));
+
+/* ---------- boot ---------- */
+if (hasBlockly) {
+  try { initBlockly(); } catch (e) { console.error(e); }
+}
+if (!hasBlockly || !workspace) {
+  els.coverMsg.textContent = "The blocks editor couldn't load, so this session is text-only. Your JavaScript or Python still runs the robot.";
+  $("backToBlocks").hidden = true;
+  els.cover.hidden = false;
+  els.modeBlocks.disabled = true;
+}
+sizeCanvas();
+$("langJs").setAttribute("aria-pressed", String(lang === "js")); $("langPy").setAttribute("aria-pressed", String(lang === "py")); setCodeLabels(); renderCheat();
+selectLevel(levelIdx);
+showTop();
+if (!hasBlockly || !workspace) els.cover.hidden = false;
+requestAnimationFrame(frame);
+log("Tip: press Run to try the starter program.", "dim");
+})();
+</script>
+</body>
+</html>

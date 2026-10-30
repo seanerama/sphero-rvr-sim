@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important} body{margin:0} img{max-width:100%}</style>
+<title>RVR Sim Lab Guide</title>
+<link rel="stylesheet" href="vendor/fonts.css">
+<style>
+/* Layout: single reading column with wide interactive panels; same identity as RVR Sim Lab */
+:root {
+  --bg: #EDF0F3; --surface: #FFFFFF; --surface-2: #F4F6F9; --ink: #142030; --muted: #5A6778; --line: #D4DBE3;
+  --accent: #D9530B; --accent-soft: #FCE6D8; --accent-ink: #FFFFFF; --ok: #1D7F47; --ok-soft: #DDF2E5;
+  --mat: #F8F9F6; --grid: #E1E6EA; --code-bg: #F3F5F8;
+  --tok-kw: #9A2FB5; --tok-fn: #0B62C4; --tok-num: #B5530A; --tok-str: #1D7F47; --tok-com: #7D8794;
+  --b-move: #3D7FD6; --b-light: #9A55C9; --b-ctrl: #E08A2E; --b-sense: #2BA58F; --b-start: #D9A92A;
+  --font-display: "Chakra Petch", "Trebuchet MS", sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D131A; --surface: #141C26; --surface-2: #1A2430; --ink: #E4EAF1; --muted: #93A0B0; --line: #283545;
+    --accent: #FF7A33; --accent-soft: #3A2316; --accent-ink: #1A0E06; --ok: #4CC782; --ok-soft: #13301F;
+    --mat: #18212B; --grid: #222E3B; --code-bg: #0F161F;
+    --tok-kw: #D59CF0; --tok-fn: #7EB8FF; --tok-num: #FFB37A; --tok-str: #7FDCA4; --tok-com: #6E7B8B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D131A; --surface: #141C26; --surface-2: #1A2430; --ink: #E4EAF1; --muted: #93A0B0; --line: #283545;
+  --accent: #FF7A33; --accent-soft: #3A2316; --accent-ink: #1A0E06; --ok: #4CC782; --ok-soft: #13301F;
+  --mat: #18212B; --grid: #222E3B; --code-bg: #0F161F;
+  --tok-kw: #D59CF0; --tok-fn: #7EB8FF; --tok-num: #FFB37A; --tok-str: #7FDCA4; --tok-com: #6E7B8B;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--font-body); font-size: 16px; line-height: 1.6; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px; }
+.page { max-width: 980px; margin: 0 auto; display: grid; gap: 40px; }
+a { color: var(--accent); font-weight: 600; }
+button { font: inherit; color: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; }
+h1 span { color: var(--accent); }
+h2 { font-size: 26px; font-weight: 600; }
+h3 { font-size: 18px; font-weight: 600; }
+p { margin: 0; max-width: 66ch; }
+.eyebrow { font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+section { display: grid; gap: 14px; min-width: 0; }
+section > *, .page > * { min-width: 0; }
+.lede { font-size: 18px; color: var(--muted); }
+.hero { display: grid; gap: 14px; }
+.hero .cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 14px; font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: none; color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; }
+code, .mono { font-family: var(--font-mono); font-size: .9em; }
+:not(pre) > code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.65; }
+.tk-kw { color: var(--tok-kw); } .tk-fn { color: var(--tok-fn); } .tk-num { color: var(--tok-num); } .tk-str { color: var(--tok-str); } .tk-com { color: var(--tok-com); font-style: italic; }
+
+/* screen tour */
+.tour { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 760px) { .tour { grid-template-columns: minmax(0, 1fr); } }
+.map { display: grid; gap: 6px; grid-template-columns: 1.1fr .8fr 1.3fr; grid-template-rows: auto auto auto auto auto; grid-template-areas: "head head head" "blocks code mission" "blocks code arena" "blocks code controls" "blocks code tele"; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+.map button { border: 1px dashed var(--line); background: var(--surface); border-radius: 6px; padding: 10px 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-align: left; display: flex; align-items: flex-start; gap: 6px; min-height: 44px; }
+.map button .dot { width: 20px; height: 20px; border-radius: 50%; flex: none; display: grid; place-items: center; font-family: var(--font-display); font-size: 11px; background: var(--surface-2); border: 1px solid var(--line); }
+.map button[aria-pressed="true"] { border-style: solid; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.map button[aria-pressed="true"] .dot { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.map [data-area="head"] { grid-area: head; } .map [data-area="blocks"] { grid-area: blocks; min-height: 170px; }
+.map [data-area="code"] { grid-area: code; } .map [data-area="mission"] { grid-area: mission; }
+.map [data-area="arena"] { grid-area: arena; min-height: 70px; } .map [data-area="controls"] { grid-area: controls; } .map [data-area="tele"] { grid-area: tele; }
+@media (max-width: 480px) { .map { grid-template-columns: 1fr 1fr; grid-template-areas: "head head" "mission mission" "arena arena" "controls tele" "blocks code"; } .map [data-area="blocks"] { min-height: 70px; } }
+.detail h3 { margin-bottom: 6px; }
+.detail ul { margin: 10px 0 0; padding-left: 20px; }
+.detail li { margin: 4px 0; }
+
+/* steps */
+.steps { display: grid; gap: 12px; counter-reset: s; list-style: none; margin: 0; padding: 0; }
+.steps li { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: start; }
+.steps li::before { counter-increment: s; content: counter(s); width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; background: var(--ink); color: var(--surface); }
+.steps li > div { display: grid; gap: 4px; padding-top: 3px; }
+.steps strong { font-weight: 700; }
+
+/* blocks mockup */
+.blk { display: inline-block; font-family: var(--font-body); font-weight: 600; font-size: 13px; color: #fff; padding: 6px 12px; border-radius: 8px; margin: 2px 0; }
+.blk i { font-style: normal; background: rgba(255,255,255,.92); color: #222; border-radius: 10px; padding: 0 7px; margin: 0 2px; }
+.blk.start { background: var(--b-start); border-radius: 14px 14px 8px 8px; }
+.blk.move { background: var(--b-move); } .blk.light { background: var(--b-light); } .blk.ctrl { background: var(--b-ctrl); } .blk.sense { background: var(--b-sense); }
+.blkstack { display: grid; justify-items: start; gap: 0; padding: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; }
+.blkstack .in { padding-left: 18px; display: grid; justify-items: start; border-left: 10px solid var(--b-ctrl); margin-left: 4px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 14px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.compare { display: grid; gap: 10px; }
+
+/* heading + distance lab */
+.lab { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: center; }
+@media (max-width: 640px) { .lab { grid-template-columns: minmax(0, 1fr); justify-items: center; } .lab .controls { width: 100%; } }
+#compass { width: 240px; height: 240px; max-width: 100%; cursor: pointer; touch-action: none; }
+.controls { display: grid; gap: 14px; }
+.row { display: grid; grid-template-columns: 90px minmax(0, 1fr) 56px; gap: 10px; align-items: center; font-size: 14px; }
+.row label { font-weight: 600; }
+.row output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.readout { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.readout div { padding: 8px 10px; border-right: 1px solid var(--line); }
+.readout div:last-child { border-right: 0; }
+.readout span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.readout b { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.lines { display: grid; gap: 6px; }
+.lines pre { padding: 8px 12px; font-size: 13px; }
+.lines small { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
+
+/* checklist */
+.check { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.check li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
+.check li.done { border-color: var(--ok); background: var(--ok-soft); }
+.check input { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--ok); cursor: pointer; }
+.check label { cursor: pointer; display: grid; gap: 4px; }
+.check label strong { font-size: 16px; }
+.check label span { color: var(--muted); font-size: 15px; }
+.progress { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--muted); font-weight: 600; }
+.bar { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; max-width: 320px; }
+.bar i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .3s; }
+.callout { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 8px 8px 0; }
+.callout p { max-width: none; }
+
+/* table */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 15px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-display); font-weight: 600; letter-spacing: .04em; background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+
+details.faq { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0 16px; }
+details.faq + details.faq { margin-top: 8px; }
+details.faq summary { cursor: pointer; font-weight: 700; padding: 12px 0; }
+details.faq div { padding-bottom: 14px; display: grid; gap: 8px; color: var(--muted); }
+.copybtn { justify-self: start; }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Guide for young coders and their grown-ups</div>
+    <h1>How to use RVR <span>Sim</span> Lab</h1>
+    <p class="lede">Practice coding a Sphero RVR+ on the screen first. When your program works in the sim, copy it into Sphero Edu and run it on the real robot.</p>
+    <div class="cta">
+      <a class="btn primary" id="openSim" href="rvr-sim-lab.html" target="_blank" rel="noopener">Open RVR Sim Lab</a>
+      <a class="btn" href="#copy">Jump to: copy code to Sphero Edu</a>
+    </div>
+  </header>
+
+  <section aria-labelledby="tour-h">
+    <div class="eyebrow">Part 1</div>
+    <h2 id="tour-h">A tour of the screen</h2>
+    <p>Tap any part of the map to learn what it does.</p>
+    <div class="tour">
+      <div class="map" role="group" aria-label="Sim Lab screen map">
+        <button type="button" data-area="head" data-key="head"><span class="dot">1</span>Mission buttons</button>
+        <button type="button" data-area="blocks" data-key="blocks"><span class="dot">2</span>Blocks</button>
+        <button type="button" data-area="code" data-key="code"><span class="dot">3</span>Code panel</button>
+        <button type="button" data-area="mission" data-key="mission"><span class="dot">4</span>Mission card</button>
+        <button type="button" data-area="arena" data-key="arena"><span class="dot">5</span>Arena</button>
+        <button type="button" data-area="controls" data-key="controls"><span class="dot">6</span>Run controls</button>
+        <button type="button" data-area="tele" data-key="tele"><span class="dot">7</span>Sensors &amp; messages</button>
+      </div>
+      <div class="card detail" id="tourDetail" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="first-h">
+    <div class="eyebrow">Part 2</div>
+    <h2 id="first-h">Your first program in five steps</h2>
+    <ol class="steps">
+      <li><div><strong>Pick Mission 1, Free Roam.</strong><span>It already has a starter program, so you can press Run right away and watch what happens.</span></div></li>
+      <li><div><strong>Open a category and drag a block.</strong><span>Click <em>Movement</em> on the left side of the Blocks panel. Drag a <span class="blk move">roll heading <i>0</i> ° speed <i>80</i> for <i>1</i> s</span> block and snap it under the others. Blocks only run if they're connected under <span class="blk start">when program starts</span>.</span></div></li>
+      <li><div><strong>Change the numbers.</strong><span>Click a white bubble on a block to type a new number. Try heading 90 to drive right.</span></div></li>
+      <li><div><strong>Press Run and watch.</strong><span>The orange line shows where the robot drove. Press Stop at any time, or Reset robot to put it back at the start.</span></div></li>
+      <li><div><strong>Look at the code panel.</strong><span>Every block you add shows up as real code. Flip between JavaScript and Python to see the same program in both languages.</span></div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="lang-h">
+    <div class="eyebrow">Part 3</div>
+    <h2 id="lang-h">One program, three ways to write it</h2>
+    <p>Blocks, JavaScript and Python all tell the robot the same thing. Here's a short program that drives until the color sensor sees red.</p>
+    <div class="compare">
+      <div class="tabs" role="tablist" aria-label="Program language">
+        <button type="button" role="tab" aria-selected="true" data-tab="blocks">Blocks</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="js">JavaScript</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="py">Python</button>
+      </div>
+      <div role="tabpanel" data-panel="blocks">
+        <div class="blkstack" aria-label="Blocks version">
+          <span class="blk start">when program starts</span>
+          <span class="blk light">set main LED <i>red ▾</i></span>
+          <span class="blk move">set speed <i>60</i></span>
+          <span class="blk ctrl">repeat until <span class="blk sense" style="margin:0 2px;padding:2px 8px">color sensor sees <i>red ▾</i></span></span>
+          <div class="in"><span class="blk ctrl">delay <i>0.05</i> s</span></div>
+          <span class="blk move">stop</span>
+        </div>
+      </div>
+      <div role="tabpanel" data-panel="js" hidden><pre data-code="js"></pre></div>
+      <div role="tabpanel" data-panel="py" hidden><pre data-code="py"></pre></div>
+      <p style="color:var(--muted);font-size:15px">Notice the little differences: JavaScript uses <code>setMainLed</code> and curly braces, while Python uses <code>set_main_led</code>, a colon and indentation. In both, <code>await</code> goes in front of commands that take time, like <code>roll</code>, <code>delay</code> and <code>speak</code>.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="lab-h">
+    <div class="eyebrow">Part 4</div>
+    <h2 id="lab-h">Headings and distance</h2>
+    <p>Heading is the direction the robot faces. <strong>0 is up</strong> on the arena, 90 is right, 180 is down and 270 is left. Click the compass to pick a heading, then move the sliders to see how far the robot would go.</p>
+    <div class="card lab">
+      <svg id="compass" viewBox="0 0 240 240" role="img" aria-label="Heading compass"></svg>
+      <div class="controls">
+        <div class="row"><label for="hd">Heading</label><input type="range" id="hd" min="0" max="345" step="15" value="90"><output id="hdOut">90°</output></div>
+        <div class="row"><label for="sp">Speed</label><input type="range" id="sp" min="10" max="255" step="5" value="100"><output id="spOut">100</output></div>
+        <div class="row"><label for="tm">Seconds</label><input type="range" id="tm" min="0.25" max="4" step="0.25" value="2"><output id="tmOut">2 s</output></div>
+        <div class="readout">
+          <div><span>Distance</span><b id="dist">118 cm</b></div>
+          <div><span>Grid squares</span><b id="sq">5.9</b></div>
+          <div><span>cm / second</span><b id="cms">59</b></div>
+        </div>
+        <div class="lines">
+          <small>JavaScript</small><pre id="lineJs"></pre>
+          <small>Python</small><pre id="linePy"></pre>
+        </div>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:15px">In the sim, speed 255 is about <span data-top>150</span> cm every second, and each arena grid square is 20 cm. Your real RVR+ may be a fair bit faster or slower, so <a href="#match">measure it in Part 6</a> and the sim will match. Negative speeds drive backward.</p>
+  </section>
+
+  <section aria-labelledby="copy-h" id="copy">
+    <div class="eyebrow">Part 5</div>
+    <h2 id="copy-h">Copy your code into Sphero Edu</h2>
+    <p>When your program works in the sim, move it to the real robot. Check off each step as you go.</p>
+    <div class="progress"><span id="progText">0 of 6 done</span><div class="bar" aria-hidden="true"><i id="progBar"></i></div><button class="btn" type="button" id="resetChecks" style="padding:4px 10px;font-size:13px">Start over</button></div>
+    <ul class="check" id="checklist">
+      <li><input type="checkbox" id="c1"><label for="c1"><strong>Pick your language in the sim</strong><span>In the code panel, choose JavaScript or Python. Remember which one you picked, because Sphero Edu needs to match.</span></label></li>
+      <li><input type="checkbox" id="c2"><label for="c2"><strong>Press “Copy for Sphero Edu”</strong><span>It's under the code panel. <code>isColor</code> / <code>is_color</code> isn't a Sphero command, so if your program uses it, the button adds that helper at the bottom for you. Keep it in your program.</span></label></li>
+      <li><input type="checkbox" id="c3"><label for="c3"><strong>Open Sphero Edu</strong><span>Use the Sphero Edu app on a tablet, phone or computer, or the web version at <a href="https://edu.sphero.com/code" target="_blank" rel="noopener">edu.sphero.com/code</a>. Sign in.</span></label></li>
+      <li><input type="checkbox" id="c4"><label for="c4"><strong>Make a new text program</strong><span>Create a new program, choose a text program, and pick the same language: JavaScript or Python. If it asks which robot, choose RVR+ (or RVR).</span></label></li>
+      <li><input type="checkbox" id="c5"><label for="c5"><strong>Replace the starter code and paste</strong><span>Select everything in the text canvas and delete it, then paste your code. Your program should start with <code>async function startProgram()</code> in JavaScript or <code>async def start_program():</code> in Python.</span></label></li>
+      <li><input type="checkbox" id="c6"><label for="c6"><strong>Connect, aim and Start</strong><span>Turn on RVR+ and connect it in Sphero Edu over Bluetooth. Clear some floor space, aim the robot so it faces where “heading 0” should go, then tap Start.</span></label></li>
+    </ul>
+    <div class="callout"><p><strong>Tip:</strong> If the real robot goes a little too far or not far enough, change the seconds or the speed by a small amount and try again. That's normal: the sim is a practice field, not a perfect copy of your floor.</p></div>
+  </section>
+
+  <section aria-labelledby="match-h" id="match">
+    <div class="eyebrow">Part 6</div>
+    <h2 id="match-h">Make the sim match your robot</h2>
+    <p>Every robot, battery and floor is a little different. Measure yours once, and your programs will drive about the same distance in the sim and on the floor.</p>
+    <ol class="steps">
+      <li><div><strong>Open “Match your real robot”.</strong><span>It's under the Run buttons in the Sim Lab.</span></div></li>
+      <li><div><strong>Run the speed test on your real robot.</strong><span>Press “Copy speed test”, paste it into Sphero Edu, put tape on the floor where the robot starts, and press Start. It waits 2 seconds, then drives for 2 seconds.</span></div></li>
+      <li><div><strong>Measure and type it in.</strong><span>Measure from the tape to where the robot stopped, type the centimeters, and press “Use this”. The robot in the sim, the mission hints and the numbers on this page will all update. Run it twice and use the middle if the numbers differ.</span></div></li>
+    </ol>
+    <p><strong>Check your color cards too.</strong> Press “Copy color test”, run it on the robot, and slide a card under it. Your device says the color the robot sees. If it stays quiet or says the wrong color, try a brighter, plainer card or more light.</p>
+    <div class="callout"><p><strong>Your robot right now:</strong> the sim is using speed 255 = <span data-top>150</span> cm/s, so speed 100 is about <span data-top100>59</span> cm/s. This page reads your number from the Sim Lab in this web browser.</p></div>
+  </section>
+
+  <section aria-labelledby="diff-h">
+    <div class="eyebrow">Part 7</div>
+    <h2 id="diff-h">What's the same, and what's different</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Thing</th><th scope="col">In the Sim Lab</th><th scope="col">On the real RVR+</th></tr></thead>
+        <tbody>
+          <tr><td>Commands</td><td>Named like Sphero Edu: <code>roll</code>, <code>spin</code>, <code>setMainLed</code> / <code>set_main_led</code>, <code>getColor</code> / <code>get_color</code>.</td><td>The same commands work, plus the <code>isColor</code> / <code>is_color</code> helper that “Copy for Sphero Edu” adds.</td></tr>
+          <tr><td>Distance</td><td>Speed 255 ≈ <span data-top>150</span> cm/s, perfectly straight, and it starts and stops instantly.</td><td>Depends on your robot, floor and battery. Use <a href="#match">Part 6</a> to match them. Real robots also take a moment to speed up.</td></tr>
+          <tr><td>Color sensor</td><td>Reads the colored tiles exactly.</td><td>Reads real colored cards. Lighting can shift the colors, so try the color test in <a href="#match">Part 6</a>.</td></tr>
+          <tr><td>Walls</td><td>The robot stops and the console says “Bump!”</td><td>The robot pushes into the wall. Give it plenty of space.</td></tr>
+          <tr><td>Numbers in Python</td><td><code>10 / 2</code> prints <code>5</code>.</td><td><code>10 / 2</code> prints <code>5.0</code>. The value is the same.</td></tr>
+          <tr><td>Speak</td><td>Shows a speech bubble.</td><td>Your device says the words out loud.</td></tr>
+          <tr><td>Saving</td><td>Your work saves in this web browser automatically.</td><td>Programs save to your Sphero Edu account.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="faq-h">
+    <div class="eyebrow">Part 8</div>
+    <h2 id="faq-h">Fixing common problems</h2>
+    <div>
+      <details class="faq"><summary>My blocks don't do anything when I press Run</summary><div><p>Make sure every block is snapped under <strong>when program starts</strong>. Loose blocks turn gray and don't run.</p></div></details>
+      <details class="faq"><summary>Python says “This line needs a colon”</summary><div><p>Lines that start a block, like <code>if</code>, <code>while</code>, <code>for</code> and <code>def</code>, must end with <code>:</code>. The lines under them need 4 spaces of indentation.</p></div></details>
+      <details class="faq"><summary>The robot drives past the red tile</summary><div><p>Check the color sensor inside a loop, with a very short delay, and stop right after the loop. A lower speed also helps the robot stop closer to the middle of the tile.</p></div></details>
+      <details class="faq"><summary>I changed the code text, and now my blocks are gone</summary><div><p>Your blocks are still saved. When you switch to “Write text”, the blocks pause because they can't read typed code. Press “From blocks” to go back to them. Your typed code is saved too, and it will be there when you come back to “Write text”. Only “Replace with code from blocks” replaces it.</p></div></details>
+      <details class="faq"><summary>Python says something “isn't supported here”</summary><div><p>The sim understands the Python most beginners use: variables, <code>if</code>/<code>elif</code>/<code>else</code>, <code>while</code>, <code>for</code>, functions, lists, tuples, dictionaries, slices, f-strings and <code>print</code>. A few advanced features, like classes, list comprehensions and <code>try</code>/<code>except</code>, only work in real Python.</p></div></details>
+      <details class="faq"><summary>Python says I need <code>await</code>, or that I shouldn't use it</summary><div><p>Commands that take time, like <code>roll</code>, <code>spin</code>, <code>delay</code> and <code>speak</code>, need <code>await</code> in front, and <code>await</code> only works inside an <code>async def</code>. If you write your own <code>async def go():</code>, call it with <code>await go()</code>. The sim checks this so your program will work on the real robot too.</p></div></details>
+      <details class="faq"><summary>The real robot goes much farther than the sim</summary><div><p>Measure your robot with the speed test in <a href="#match">Part 6</a>. After that, the sim will drive the same distance.</p></div></details>
+      <details class="faq"><summary>Where did my missions go?</summary><div><p>Progress is saved in the web browser you used. A different browser or device starts fresh.</p></div></details>
+    </div>
+  </section>
+
+  <footer>RVR Sim Lab is a practice tool. Sphero, RVR, RVR+ and Sphero Edu are trademarks of Sphero, Inc.</footer>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("rvrguide:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("rvrguide:" + k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  /* ---- syntax highlight ---- */
+  const API = ["roll", "spin", "setHeading", "setSpeed", "stopRoll", "delay", "setMainLed", "speak", "getColor", "isColor", "set_heading", "set_speed", "stop_roll", "set_main_led", "get_color", "is_color"];
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function hl(code, py) {
+    const kw = py ? "async|await|def|while|for|in|if|elif|else|not|and|or|True|False|None" : "async|await|function|while|for|if|else|let|const|true|false";
+    const com = py ? "#[^\\n]*" : "\\/\\/[^\\n]*";
+    const re = new RegExp(`(${com})|('(?:[^'\\\\\\n]|\\\\.)*')|\\b(${kw})\\b|\\b(\\d+(?:\\.\\d+)?)\\b|\\b([A-Za-z_]\\w*)(?=\\s*\\()`, "g");
+    let out = "", last = 0, m;
+    while ((m = re.exec(code))) {
+      out += esc(code.slice(last, m.index));
+      const t = m[0];
+      out += m[1] ? `<span class="tk-com">${esc(t)}</span>` : m[2] ? `<span class="tk-str">${esc(t)}</span>` : m[3] ? `<span class="tk-kw">${t}</span>` : m[4] ? `<span class="tk-num">${t}</span>` : API.includes(t) ? `<span class="tk-fn">${t}</span>` : esc(t);
+      last = m.index + t.length;
+    }
+    return out + esc(code.slice(last));
+  }
+
+  /* ---- tour ---- */
+  const TOUR = {
+    head: ["Mission buttons", "Four missions, from easy to tricky. A green check appears when you finish one.", ["Free Roam: explore and experiment", "Square Dance: drive a perfect square", "Garage Parking: steer around walls", "Red Light Stop: use the color sensor"]],
+    blocks: ["Blocks", "Drag blocks from the categories on the left and snap them together like Scratch.", ["Movement, Lights, Sounds, Controls, Sensors, Operators, Variables", "Only blocks under “when program starts” run", "Drag a block to the trash can to delete it"]],
+    code: ["Code panel", "Shows your blocks as real code, updating as you build.", ["JavaScript / Python switch picks the language", "“From blocks” shows code made from your blocks", "“Write text” lets you type code yourself", "“Copy for Sphero Edu” copies it for the real robot", "Open the cheat sheet for every command"]],
+    mission: ["Mission card", "Tells you the goal of the current mission and how you did.", ["“Need a hint?” gives a nudge without the answer", "Green message: mission complete", "Red message: what to fix next"]],
+    arena: ["Arena", "A top-down view of the robot on its mat. Up is heading 0.", ["Each grid square is 20 cm", "The orange ring marks the start", "The orange line is the robot's trail", "The little dot in the middle is the color sensor"]],
+    controls: ["Run controls", "Start and stop your program.", ["Run starts from the start spot every time", "Stop ends the program right away", "Reset robot moves it back without running", "1×, 2×, 4× speeds up the simulation", "“Match your real robot” measures your robot's speed and checks your color cards"]],
+    tele: ["Sensors & messages", "Live numbers from the robot, plus a message box.", ["Heading, speed and x, y location in cm", "Color shows what the sensor sees right now", "Messages show speak, print, bumps and errors"]]
+  };
+  const tourBtns = document.querySelectorAll(".map button");
+  function showTour(k) {
+    tourBtns.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.key === k)));
+    const [t, d, list] = TOUR[k];
+    $("tourDetail").innerHTML = `<h3>${t}</h3><p>${d}</p><ul>${list.map(x => `<li>${x}</li>`).join("")}</ul>`;
+  }
+  tourBtns.forEach(b => b.addEventListener("click", () => showTour(b.dataset.key)));
+  showTour("code");
+
+  /* ---- language tabs ---- */
+  const EX = {
+    js: `async function startProgram() {
+  setMainLed({ r: 255, g: 0, b: 0 });
+  setSpeed(60);
+  while (!(isColor(getColor(), 'red'))) {
+    await delay(0.05);
+  }
+  stopRoll();
+}`,
+    py: `async def start_program():
+    set_main_led({'r': 255, 'g': 0, 'b': 0})
+    set_speed(60)
+    while not is_color(get_color(), 'red'):
+        await delay(0.05)
+    stop_roll()`
+  };
+  document.querySelector('[data-code="js"]').innerHTML = hl(EX.js, false);
+  document.querySelector('[data-code="py"]').innerHTML = hl(EX.py, true);
+  const tabs = document.querySelectorAll('[role="tab"]');
+  tabs.forEach(t => t.addEventListener("click", () => {
+    tabs.forEach(o => o.setAttribute("aria-selected", String(o === t)));
+    document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== t.dataset.tab);
+  }));
+
+  /* ---- heading lab ---- */
+  /* the speed the student measured in the Sim Lab's "Match your real robot" panel */
+  const readTop = () => { try { const v = Number(JSON.parse(localStorage.getItem("rvrsim:topCmS"))); return v > 0 ? v : 150; } catch (e) { return 150; } };
+  let topCmS = readTop();
+  function showTop() {
+    document.querySelectorAll("[data-top]").forEach(e => e.textContent = topCmS);
+    document.querySelectorAll("[data-top100]").forEach(e => e.textContent = Math.round(100 / 255 * topCmS));
+  }
+  const svg = $("compass"), NS = "http://www.w3.org/2000/svg";
+  const hd = $("hd"), sp = $("sp"), tm = $("tm");
+  function el(n, a) { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; }
+  function drawCompass() {
+    const h = +hd.value, s = +sp.value, t = +tm.value;
+    const cms = s / 255 * topCmS, dist = cms * t;
+    svg.innerHTML = "";
+    svg.append(el("circle", { cx: 120, cy: 120, r: 100, fill: "var(--mat)", stroke: "var(--line)", "stroke-width": 1.5 }));
+    for (let a = 0; a < 360; a += 15) {
+      const r = a * Math.PI / 180, big = a % 90 === 0, r1 = big ? 86 : 93;
+      svg.append(el("line", { x1: 120 + Math.sin(r) * r1, y1: 120 - Math.cos(r) * r1, x2: 120 + Math.sin(r) * 100, y2: 120 - Math.cos(r) * 100, stroke: big ? "var(--muted)" : "var(--line)", "stroke-width": big ? 2 : 1.2 }));
+    }
+    [[0, "0°"], [90, "90°"], [180, "180°"], [270, "270°"]].forEach(([a, l]) => {
+      const r = a * Math.PI / 180, tx = el("text", { x: 120 + Math.sin(r) * 72, y: 120 - Math.cos(r) * 72 + 4, "text-anchor": "middle", fill: "var(--muted)", "font-size": 12, "font-family": "JetBrains Mono, monospace" });
+      tx.textContent = l; svg.append(tx);
+    });
+    const len = Math.min(96, 18 + dist / 400 * 78), r = h * Math.PI / 180;
+    const ex = 120 + Math.sin(r) * len, ey = 120 - Math.cos(r) * len;
+    svg.append(el("line", { x1: 120, y1: 120, x2: ex, y2: ey, stroke: "var(--accent)", "stroke-width": 4, "stroke-linecap": "round" }));
+    const g = el("g", { transform: `translate(${ex} ${ey}) rotate(${h})` });
+    g.append(el("path", { d: "M0 -9 L7 4 L-7 4 Z", fill: "var(--accent)" })); svg.append(g);
+    const bot = el("g", { transform: `translate(120 120) rotate(${h})` });
+    bot.append(el("rect", { x: -11, y: -13, width: 22, height: 26, rx: 4, fill: "#2b333d" }));
+    bot.append(el("rect", { x: -7, y: -9, width: 14, height: 17, rx: 2, fill: "#e9edf1" }));
+    bot.append(el("rect", { x: -7, y: -14, width: 5, height: 2.5, rx: 1, fill: "var(--accent)" }));
+    bot.append(el("rect", { x: 2, y: -14, width: 5, height: 2.5, rx: 1, fill: "var(--accent)" }));
+    svg.append(bot);
+    $("hdOut").textContent = h + "°"; $("spOut").textContent = s; $("tmOut").textContent = t + " s";
+    $("dist").textContent = Math.round(dist) + " cm"; $("sq").textContent = (dist / 20).toFixed(1); $("cms").textContent = Math.round(cms);
+    $("lineJs").innerHTML = hl(`await roll(${h}, ${s}, ${t});`, false);
+    $("linePy").innerHTML = hl(`await roll(${h}, ${s}, ${t})`, true);
+  }
+  [hd, sp, tm].forEach(i => i.addEventListener("input", drawCompass));
+  function pick(e) {
+    const b = svg.getBoundingClientRect();
+    const x = (e.clientX - b.left) / b.width * 240 - 120, y = (e.clientY - b.top) / b.height * 240 - 120;
+    let a = Math.atan2(x, -y) * 180 / Math.PI; a = (Math.round(a / 15) * 15 + 360) % 360;
+    hd.value = a; drawCompass();
+  }
+  let dragging = false;
+  svg.addEventListener("pointerdown", e => { dragging = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {} pick(e); });
+  svg.addEventListener("pointermove", e => { if (dragging) pick(e); });
+  svg.addEventListener("pointerup", () => dragging = false);
+  showTop();
+  drawCompass();
+  addEventListener("storage", e => { if (e.key === "rvrsim:topCmS") { topCmS = readTop(); showTop(); drawCompass(); } });
+
+  /* ---- checklist ---- */
+  const boxes = [...document.querySelectorAll("#checklist input")];
+  const saved = store.get("checks", []);
+  function syncChecks() {
+    const n = boxes.filter(b => b.checked).length;
+    boxes.forEach(b => b.closest("li").classList.toggle("done", b.checked));
+    $("progText").textContent = n === boxes.length ? "All done. Time to drive!" : `${n} of ${boxes.length} done`;
+    $("progBar").style.width = (n / boxes.length * 100) + "%";
+    store.set("checks", boxes.map(b => b.checked));
+  }
+  boxes.forEach((b, i) => { b.checked = !!saved[i]; b.addEventListener("change", syncChecks); });
+  $("resetChecks").addEventListener("click", () => { boxes.forEach(b => b.checked = false); syncChecks(); });
+  syncChecks();
+})();
+</script>
+</body>
+</html>
